@@ -82,8 +82,8 @@ model = get_peft_model(model, config)
 #train_val = data["train"].train_test_split(
 #    test_size=VAL_SET_SIZE, shuffle=True, seed=42
 #)
-train_data = load_dataset("json", data_files="train_data.json")
-val_data = load_dataset("json", data_files="val_data.json")
+train_data = load_dataset("json", data_files="data/train_data.json")
+val_data = load_dataset("json", data_files="data/val_data.json")
 
 
 def generate_prompt(data_point):
