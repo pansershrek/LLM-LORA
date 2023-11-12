@@ -76,6 +76,7 @@ config = LoraConfig(
     task_type="CAUSAL_LM",
 )
 model = get_peft_model(model, config)
+tokenizer.pad_token = tokenizer.eos_token
 #tokenizer.pad_token_id = 0  # unk. we want this to be different from the eos token
 #data = load_dataset("json", data_files=DATA_PATH)
 
