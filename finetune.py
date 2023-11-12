@@ -200,7 +200,6 @@ trainer = transformers.Trainer(
         output_dir="mistral_finetune",
         save_total_limit=3,
         load_best_model_at_end=True,
-        ddp_find_unused_parameters=False if ddp else None,
     ),
     data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False),
 )
