@@ -83,8 +83,8 @@ tokenizer.pad_token = tokenizer.eos_token
 #train_val = data["train"].train_test_split(
 #    test_size=VAL_SET_SIZE, shuffle=True, seed=42
 #)
-train_data = load_dataset("json", data_files="data/train_data.json")
-val_data = load_dataset("json", data_files="data/val_data.json")
+train_data = load_dataset("json", data_files="data/train_data.json")["train"]
+val_data = load_dataset("json", data_files="data/val_data.json")["train"]
 
 
 def generate_prompt(data_point):
@@ -201,7 +201,7 @@ trainer = transformers.Trainer(
         save_total_limit=3,
         load_best_model_at_end=True,
     ),
-    data_collator=transformers.DataCollatorForTokenClassification(tokenizer),
+    data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False),
 )
 
 
