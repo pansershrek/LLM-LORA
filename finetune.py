@@ -219,13 +219,10 @@ model.state_dict = (
 if torch.__version__ >= "2":
     model = torch.compile(model)
 
-# with wandb.init(project="Instruction NER") as run:
-#     model.print_trainable_parameters()
-#     trainer.train() #if resume, choose True, else False
-#     torch.save(model.state_dict(), f"final_mistral.pth")
-
-trainer.train() #if resume, choose True, else False
-torch.save(model.state_dict(), f"final_mistral.pth")
+with wandb.init(project="Instruction NER") as run:
+    model.print_trainable_parameters()
+    trainer.train() #if resume, choose True, else False
+    torch.save(model.state_dict(), f"final_mistral.pth")
 
 model.save_pretrained("mistral_finetune")
 
