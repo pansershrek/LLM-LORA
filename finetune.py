@@ -62,6 +62,7 @@ model = AutoModelForCausalLM.from_pretrained(
     model_name,
     device_map='cuda:0',
     load_in_8bit=True,
+    use_flash_attention_2=True
 )
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
