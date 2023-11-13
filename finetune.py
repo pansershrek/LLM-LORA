@@ -201,7 +201,7 @@ trainer = transformers.Trainer(
         save_total_limit=3,
         load_best_model_at_end=True,
     ),
-    data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False),
+    data_collator=transformers.DataCollatorForTokenClassification(tokenizer),
 )
 
 
