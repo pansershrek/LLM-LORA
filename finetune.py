@@ -181,6 +181,8 @@ def generate_and_tokenize_prompt(data_point):
 train_data = train_data.shuffle().map(generate_and_tokenize_prompt)
 val_data = val_data.shuffle().map(generate_and_tokenize_prompt)
 
+data_collator = transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False)
+
 trainer = transformers.Trainer(
     model=model,
     train_dataset=train_data,
@@ -202,7 +204,7 @@ trainer = transformers.Trainer(
         #save_total_limit=3,
         #load_best_model_at_end=True,
     ),
-    data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False),
+    data_collator=data_collator,
 )
 
 
@@ -217,10 +219,13 @@ model.state_dict = (
 if torch.__version__ >= "2":
     model = torch.compile(model)
 
-with wandb.init(project="Instruction NER") as run:
-    model.print_trainable_parameters()
-    trainer.train() #if resume, choose True, else False
-    torch.save(model.state_dict(), f"final_mistral.pth")
+# with wandb.init(project="Instruction NER") as run:
+#     model.print_trainable_parameters()
+#     trainer.train() #if resume, choose True, else False
+#     torch.save(model.state_dict(), f"final_mistral.pth")
+
+trainer.train() #if resume, choose True, else False
+torch.save(model.state_dict(), f"final_mistral.pth")
 
 model.save_pretrained("mistral_finetune")
 
