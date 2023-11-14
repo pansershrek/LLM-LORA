@@ -138,7 +138,7 @@ gr.Interface(
     ],
     title="🌲 🌲 🌲 BLOOM-LoRA",
     description="BLOOM-LoRA is a 560M-parameter BLOOM model finetuned to follow instructions. It is trained on the [Stanford Alpaca](https://github.com/tatsu-lab/stanford_alpaca) dataset and makes use of the Huggingface LLaMA implementation. For more information, please visit [the project's website](https://github.com/tloen/alpaca-lora).",
-).launch()
+).launch(server_name="0.0.0.0", share=True)
 
 # Old testing code follows.
 
