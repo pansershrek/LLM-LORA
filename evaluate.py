@@ -87,8 +87,8 @@ def main():
         output = tokenizer.decode(s).split("### Response:")[1].strip()
         ans = {
             "ground_truth": data["raw_entities"],
-            "predict": {},
-            "raw_output": {x: [] for x in ENTITES}
+            "predict": {x: [] for x in ENTITES},
+            "raw_output": output
         }
         output_list = output.split("\n")
         for entity in ENTITES:
@@ -102,8 +102,8 @@ def main():
         for entity in ENTITES:
             entity_cnt[entity] += len(ans["ground_truth"][entity])
             for x, y in zip(
-                sorted(ans["raw_output"][entity]),
-                sorted(ans["predict"][entity])
+                sorted(ans["predict"][entity]),
+                sorted(ans["ground_truth"][entity])
             ):
                 if x.strip().lower() == y.strip().lower():
                     entity_correct_cnt[entity] += 1
