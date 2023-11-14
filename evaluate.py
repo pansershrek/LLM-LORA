@@ -72,7 +72,7 @@ def main():
             data["instruction"], data["input"]
         )
         inputs = tokenizer(prompt, return_tensors="pt")
-        input_ids = inputs["input_ids"].to(device)
+        input_ids = inputs["input_ids"].to("cuda:0")
         generation_config = GenerationConfig.from_pretrained(args.model_name)
 
         with torch.no_grad():
