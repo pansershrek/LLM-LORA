@@ -102,8 +102,8 @@ def main():
         for entity in ENTITES:
             entity_cnt[entity] += len(data["raw_entities"][entity])
             for x, y in zip(
-                sorted(data["raw_entities"][entity]),
-                sorted(data["predict"][entity])
+                sorted(ans["raw_entities"][entity]),
+                sorted(ans["predict"][entity])
             ):
                 if x.strip().lower() == y.strip().lower():
                     entity_correct_cnt[entity] += 1
