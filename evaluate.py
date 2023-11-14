@@ -49,7 +49,7 @@ def main():
             use_flash_attention_2=True
         )
         model = prepare_model_for_kbit_training(model)
-        model = PeftModel.from_pretrained(model, LORA_WEIGHTS)
+        model = PeftModel.from_pretrained(model, args.lora_weights)
         tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     else:
         print("Work only with cuda")
