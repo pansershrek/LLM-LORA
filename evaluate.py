@@ -100,9 +100,9 @@ def main():
                     break
 
         for entity in ENTITES:
-            entity_cnt[entity] += len(data["raw_entities"][entity])
+            entity_cnt[entity] += len(data["rought_output"][entity])
             for x, y in zip(
-                sorted(ans["raw_entities"][entity]),
+                sorted(ans["rought_output"][entity]),
                 sorted(ans["predict"][entity])
             ):
                 if x.strip().lower() == y.strip().lower():
