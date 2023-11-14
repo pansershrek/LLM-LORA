@@ -88,7 +88,7 @@ def main():
         ans = {
             "ground_truth": data["raw_entities"],
             "predict": {},
-            "raw_output": output
+            "raw_output": {x: [] for x in ENTITES}
         }
         output_list = output.split("\n")
         for entity in ENTITES:
