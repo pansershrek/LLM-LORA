@@ -6,11 +6,11 @@ import gradio as gr
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BloomForCausalLM, GenerationConfig
 from transformers.models.opt.modeling_opt import OPTDecoderLayer
 
-tokenizer = AutoTokenizer.from_pretrained('bigscience/bloom')
+tokenizer = AutoTokenizer.from_pretrained('mistralai/Mistral-7B-Instruct-v0.1')
 
-BASE_MODEL = "bigscience/bloom-7b1"
+BASE_MODEL = "mistralai/Mistral-7B-Instruct-v0.1"
 
-LORA_WEIGHTS = "LinhDuong/bloom-7b1-alpaca"
+LORA_WEIGHTS = "/home/admin/LLM-LORA/mistral_finetune"
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -24,13 +24,14 @@ except:
     pass
 
 if device == "cuda":
-    model = BloomForCausalLM.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(
         BASE_MODEL,
         load_in_8bit=True,
         torch_dtype=torch.float16,
-        device_map="auto",
+        device_map='cuda:0',
+        use_flash_attention_2=True
     )
-    model = PeftModel.from_pretrained(model, LORA_WEIGHTS, torch_dtype=torch.float16)
+    model = PeftModel.from_pretrained(model, LORA_WEIGHTS)
 elif device == "mps":
     model = BloomForCausalLM.from_pretrained(
         BASE_MODEL,
