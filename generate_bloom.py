@@ -1,5 +1,5 @@
 import torch
-from peft import PeftModel
+from peft import PeftModel, prepare_model_for_kbit_training
 import transformers
 import gradio as gr
 
@@ -31,6 +31,7 @@ if device == "cuda":
         device_map='cuda:0',
         use_flash_attention_2=True
     )
+    model = prepare_model_for_kbit_training(model)
     model = PeftModel.from_pretrained(model, LORA_WEIGHTS)
 elif device == "mps":
     model = BloomForCausalLM.from_pretrained(
