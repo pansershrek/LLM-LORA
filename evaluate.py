@@ -67,7 +67,8 @@ def main():
     entity_correct_cnt = {x: 0 for x in ENTITES}
     entity_cnt = {x: 0 for x in ENTITES}
 
-    for data in val_data:
+    for idx, data in enumerate(val_data):
+        print(f"Step {idx}", flush=True)
         prompt = generate_prompt(
             data["instruction"], data["input"]
         )
