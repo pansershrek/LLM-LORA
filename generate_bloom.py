@@ -130,10 +130,11 @@ gr.Interface(
         ),
     ],
     outputs=[
-        gr.inputs.Textbox(
-            lines=5,
-            label="Output",
-        )
+        "text"
+        #gr.inputs.Textbox(
+        #    lines=5,
+        #    label="Output",
+        #)
     ],
     title="🌲 🌲 🌲 BLOOM-LoRA",
     description="BLOOM-LoRA is a 560M-parameter BLOOM model finetuned to follow instructions. It is trained on the [Stanford Alpaca](https://github.com/tatsu-lab/stanford_alpaca) dataset and makes use of the Huggingface LLaMA implementation. For more information, please visit [the project's website](https://github.com/tloen/alpaca-lora).",
