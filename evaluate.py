@@ -81,7 +81,7 @@ def main():
                 generation_config=generation_config,
                 return_dict_in_generate=True,
                 output_scores=True,
-                max_new_tokens=max_new_tokens,
+                max_new_tokens=512,
             )
         s = generation_output.sequences[0]
         output = tokenizer.decode(s).split("### Response:")[1].strip()
