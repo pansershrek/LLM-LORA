@@ -100,7 +100,7 @@ def main():
                     break
 
         for entity in ENTITES:
-            entity_cnt[entity] += len(data["rought_output"][entity])
+            entity_cnt[entity] += len(ans["rought_output"][entity])
             for x, y in zip(
                 sorted(ans["rought_output"][entity]),
                 sorted(ans["predict"][entity])
