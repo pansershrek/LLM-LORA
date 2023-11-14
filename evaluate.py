@@ -88,7 +88,7 @@ def main():
         ans = {
             "ground_truth": data["raw_entities"],
             "predict": {},
-            "rought_output": output
+            "raw_output": output
         }
         output_list = output.split("\n")
         for entity in ENTITES:
@@ -100,9 +100,9 @@ def main():
                     break
 
         for entity in ENTITES:
-            entity_cnt[entity] += len(ans["rought_output"][entity])
+            entity_cnt[entity] += len(ans["ground_truth"][entity])
             for x, y in zip(
-                sorted(ans["rought_output"][entity]),
+                sorted(ans["raw_output"][entity]),
                 sorted(ans["predict"][entity])
             ):
                 if x.strip().lower() == y.strip().lower():
