@@ -42,7 +42,7 @@ BATCH_SIZE = 8
 GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
 EPOCHS = 3  # we don't always need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
-CUTOFF_LEN = 512  # 256 accounts for about 96% of the data
+CUTOFF_LEN = 256  # 256 accounts for about 96% of the data
 LORA_R = 8
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
@@ -88,8 +88,17 @@ train_data = load_dataset("json", data_files="data/train_data.json")["train"]
 val_data = load_dataset("json", data_files="data/val_data.json")["train"]
 
 
-def generate_prompt(data_point):
+def generate_prompt(data_point, without_system=True):
     # sorry about the formatting disaster gotta move fast
+    if without_system and data_point["input"]:
+        return f"""### Task:
+{data_point["instruction"]}
+
+### Input:
+{data_point["input"]}
+
+### Output:
+{data_point["output"]}"""
     if data_point["input"]:
         return f"""Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
@@ -200,7 +209,7 @@ trainer = transformers.Trainer(
         #save_strategy="epoch",
         eval_steps=200,
         save_steps=200,
-        output_dir="mistral_finetune",
+        output_dir="mistral_finetune_1",
         #save_total_limit=3,
         #load_best_model_at_end=True,
     ),
@@ -222,8 +231,8 @@ if torch.__version__ >= "2":
 with wandb.init(project="Instruction NER") as run:
     model.print_trainable_parameters()
     trainer.train() #if resume, choose True, else False
-    torch.save(model.state_dict(), f"final_mistral.pth")
+    #torch.save(model.state_dict(), f"final_mistral_1.pth")
 
-model.save_pretrained("mistral_finetune")
+model.save_pretrained("mistral_finetune_1")
 
 print("\n If there's a warning about missing keys above, please disregard :)")
