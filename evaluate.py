@@ -111,7 +111,8 @@ def main():
             "ground_truth": data["raw_entities"],
             "predict": {x: [] for x in ENTITIES},
             "raw_output": output,
-            "input": prompt
+            "input": data["input"],
+            "full_prompt": prompt,
         }
         for k, v in ans["ground_truth"].items():
             ans["ground_truth"][k] = [y.lower() for y in v]
