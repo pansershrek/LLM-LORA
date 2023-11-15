@@ -97,6 +97,16 @@ def main():
         input_ids = inputs["input_ids"].to("cuda:0")
         generation_config = GenerationConfig.from_pretrained(args.model_name)
 
+        #generation_config.renormalize_logits = True
+        #whitelist = (
+        #    [data["input"].split(" ")] +
+        #    ["PER:", "ORG:", "LOC:", "MISC:"] +
+        #    ["PER:\n", "ORG:\n", "LOC:\n", "MISC:\n", "\n"]
+        #)
+        #whitelist_ids = [tokenizer.encode(word)[0] for word in whitelist]
+        #bad_words_ids=[[id] for id in range(tokenizer.vocab_size) if id not in whitelist_ids]
+
+
         with torch.no_grad():
             generation_output = model.generate(
                 input_ids=input_ids,
@@ -104,6 +114,7 @@ def main():
                 return_dict_in_generate=True,
                 output_scores=True,
                 max_new_tokens=512,
+                #bad_words_ids=bad_words_ids
             )
         s = generation_output.sequences[0]
         output = tokenizer.decode(s).split("### Response:")[1].strip()
