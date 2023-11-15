@@ -135,7 +135,7 @@ def main():
                 if y.lower() in ans["ground_truth"][entity]:
                     tmp_g[-1] = ENTITIES2ID[entity]
                     break
-            for entity in ENTITES:
+            for entity in ENTITIES:
                 if y.lower() in ans["predict"][entity]:
                     tmp_p[-1] = ENTITIES2ID[entity]
                     break
