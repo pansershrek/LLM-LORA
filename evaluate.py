@@ -8,6 +8,7 @@ import pandas as pd
 
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BloomForCausalLM, GenerationConfig
 from transformers.models.opt.modeling_opt import OPTDecoderLayer
+from sklearn.metrics import classification_report
 
 def generate_prompt(instruction, input=None):
     if input:
@@ -29,7 +30,30 @@ def generate_prompt(instruction, input=None):
 ### Response:"""
 
 
-ENTITES = ["PER", "ORG", "LOC", "MISC"]
+ENTITIES = ["PER", "ORG", "LOC", "MISC"]
+ENTITIES2ID = {y: x for x, y in enumerate(ENTITIES+["NONE"])}
+ID2ENTITIES = {x: y for x, y in enumerate(ENTITIES+["NONE"])}
+
+def check(x):
+    if not x:
+        return True
+    if "none" in x.lower():
+        return True
+    if "not specified in the given input" in x.lower():
+        return True
+    if "n/a" in x.lower():
+        return True
+    if "not specified" in x.lower():
+        return True
+    if "not present in this input" in x.lower():
+        return True
+    if "not applicable in this context" in x.lower():
+        return True
+    if "not present in the given input" in x.lower():
+        return True
+    if "no entities of type" in x.lower():
+        return True
+    return False
 
 def main():
     parser = argparse.ArgumentParser()
@@ -64,9 +88,6 @@ def main():
 
     answer = []
 
-    entity_correct_cnt = {x: 0 for x in ENTITES}
-    entity_cnt = {x: 0 for x in ENTITES}
-
     for idx, data in enumerate(val_data):
         print(f"Step {idx}", flush=True)
         prompt = generate_prompt(
@@ -88,37 +109,57 @@ def main():
         output = tokenizer.decode(s).split("### Response:")[1].strip()
         ans = {
             "ground_truth": data["raw_entities"],
-            "predict": {x: [] for x in ENTITES},
-            "raw_output": output
+            "predict": {x: [] for x in ENTITIES},
+            "raw_output": output,
+            "input": prompt
         }
+        for k, v in ans["ground_truth"].items():
+            ans["ground_truth"][k] = [y.lower() for y in v]
         output_list = output.split("\n")
-        for entity in ENTITES:
+        for entity in ENTITIES:
             for row in output_list:
                 if row.startswith(entity+":"):
                     tmp_row = row.split(entity+":")[-1]
-                    tmp_row = [x.strip().replace("</s>", "") for x in tmp_row.split(",")]
+                    tmp_row = [y.strip().replace("</s>", "") for y in tmp_row.split(",")]
+                    tmp_row = [y.lower() for y in tmp_row if not check(y)]
                     ans["predict"][entity] = tmp_row
                     break
 
-        for entity in ENTITES:
-            entity_cnt[entity] += len(ans["ground_truth"][entity])
-            for x, y in zip(
-                sorted(ans["predict"][entity]),
-                sorted(ans["ground_truth"][entity])
-            ):
-                if x.strip().lower() == y.strip().lower():
-                    entity_correct_cnt[entity] += 1
+        tmp_p = []
+        tmp_g = []
+
+        for y in ans["input"].split(" "):
+            tmp_g.append(ENTITIES2ID["NONE"])
+            tmp_p.append(ENTITIES2ID["NONE"])
+            for entity in ENTITES:
+                if y.lower() in ans["ground_truth"][entity]:
+                    tmp_g[-1] = ENTITIES2ID[entity]
+                    break
+            for entity in ENTITES:
+                if y.lower() in ans["predict"][entity]:
+                    tmp_p[-1] = ENTITIES2ID[entity]
+                    break
+        ans["ground_truth_ner_classes"] = tmp_g
+        ans["predict_ner_classes"] = tmp_p
 
         answer.append(ans)
 
-    for entity in ENTITES:
-        accuracy = 0
-        if entity_cnt[entity]:
-            accuracy = entity_correct_cnt[entity] / entity_cnt[entity] *  100.0
-        print(f"Accuracy for {entity} entity is {accuracy:.2f}")
-
     df = pd.DataFrame.from_dict(answer)
     df.to_csv(args.output_path)
+
+    ground_truth = []
+    predict = []
+    for x in answer:
+        ground_truth += x["ground_truth_ner_classes"]
+        predict += x["predict_ner_classes"]
+
+    with open("f1_score.txt", "w") as f:
+        print(
+            classification_report(
+                ground_truth, predict,
+                target_names=['PER', 'ORG', 'LOC', 'MISC', 'NONE']
+            ), file=f
+        )
 
 
 if __name__ == "__main__":
