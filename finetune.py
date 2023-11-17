@@ -54,7 +54,7 @@ TARGET_MODULES = [
     "q_proj", "k_proj", "v_proj", "o_proj"
 ]
 
-model_name = "meta-llama/Llama-2-13b-hf"
+model_name = "meta-llama/Llama-2-13b-hf" #"mistralai/Mistral-7B-Instruct-v0.1"
 #model_name = "bigscience/bloom-1b1"
 #model_name = "bigscience/bloom-1b7"
 #model_name = "bigscience/bloom-3b"
