@@ -54,7 +54,7 @@ TARGET_MODULES = [
     "q_proj", "k_proj", "v_proj", "o_proj"
 ]
 
-model_name = "mistralai/Mistral-7B-Instruct-v0.1"
+model_name = "meta-llama/Llama-2-13b-hf"
 #model_name = "bigscience/bloom-1b1"
 #model_name = "bigscience/bloom-1b7"
 #model_name = "bigscience/bloom-3b"
@@ -84,7 +84,7 @@ config = LoraConfig(
     task_type="CAUSAL_LM",
 )
 model = get_peft_model(model, config)
-#model.config.max_length = CUTOFF_LEN
+model.config.max_length = CUTOFF_LEN
 tokenizer.pad_token = tokenizer.eos_token
 #tokenizer.pad_token_id = 0  # unk. we want this to be different from the eos token
 #data = load_dataset("json", data_files=DATA_PATH)
