@@ -201,7 +201,7 @@ def generate_and_tokenize_prompt(data_point, without_system=True):
 train_data = train_data.shuffle().map(generate_and_tokenize_prompt)
 val_data = val_data.shuffle().map(generate_and_tokenize_prompt)
 
-data_collator = transformers.DataCollatorForTokenClassification(tokenizer)
+data_collator = transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
 trainer = transformers.Trainer(
     model=model,
