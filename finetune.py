@@ -179,8 +179,8 @@ model = AutoModelForCausalLM.from_pretrained(
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 model_config = AutoConfig.from_pretrained(model_name)
-tokenizer = fix_tokenizer(tokenizer, model_config) # Maybe to comment
-model = fix_model(model, tokenizer, use_resize=False) # Maybe to comment
+#tokenizer = fix_tokenizer(tokenizer, model_config) # Maybe to comment
+#model = fix_model(model, tokenizer, use_resize=False) # Maybe to comment
 
 model = prepare_model_for_kbit_training(model)
 
