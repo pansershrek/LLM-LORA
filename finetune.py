@@ -36,14 +36,119 @@ from transformers import (AutoModelForCausalLM, AutoTokenizer,
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 
 
+MODEL_OUTPUT = "mistral_finetune_2"
+
+def fix_tokenizer(tokenizer, model_config):
+    bad_ids = (None, tokenizer.vocab_size)
+
+    special_tokens = dict()
+    guessed_pad_token_id = None
+    guessed_bos_token_id = None
+    guessed_eos_token_id = None
+    guessed_unk_token_id = None
+    for token_id in range(1000):
+        token = tokenizer.convert_ids_to_tokens(token_id)
+        if tokenizer.pad_token_id in bad_ids and guessed_pad_token_id is None and "pad" in token:
+            guessed_pad_token_id = token_id
+        if tokenizer.bos_token_id in bad_ids and guessed_bos_token_id is None and "<s>" in token:
+            guessed_bos_token_id = token_id
+        if tokenizer.eos_token_id in bad_ids and guessed_eos_token_id is None and "</s>" in token:
+            guessed_eos_token_id = token_id
+        if tokenizer.unk_token_id in bad_ids and guessed_unk_token_id is None and "unk" in token:
+            guessed_unk_token_id = token_id
+
+    if tokenizer.pad_token_id in bad_ids:
+        candidates = (
+            model_config.pad_token_id,
+            guessed_pad_token_id,
+            tokenizer.unk_token_id
+        )
+        token_id, token = _check_candidates(candidates, bad_ids, tokenizer, "<pad>")
+        tokenizer.pad_token_id = token_id
+        special_tokens["pad_token"] = token
+
+    if tokenizer.bos_token_id in bad_ids:
+        candidates = (
+            model_config.bos_token_id,
+            guessed_bos_token_id,
+            tokenizer.cls_token_id,
+            tokenizer.sep_token_id,
+            tokenizer.eos_token_id,
+        )
+        token_id, token = _check_candidates(candidates, bad_ids, tokenizer, "<s>")
+        tokenizer.bos_token_id = token_id
+        special_tokens["bos_token"] = token
+
+    if tokenizer.eos_token_id in bad_ids:
+        candidates = (
+            model_config.eos_token_id,
+            guessed_eos_token_id,
+            tokenizer.bos_token_id
+        )
+        token_id, token = _check_candidates(candidates, bad_ids, tokenizer, "</s>")
+        tokenizer.eos_token_id = token_id
+        special_tokens["eos_token"] = token
+
+    if tokenizer.unk_token_id in bad_ids:
+        candidates = (
+            model_config.unk_token_id,
+            guessed_unk_token_id
+        )
+        token_id, token = check_candidates(candidates, bad_ids, tokenizer, "<unk>")
+        tokenizer.unk_token_id = token_id
+        special_tokens["unk_token"] = token
+
+    tokenizer.add_special_tokens(special_tokens)
+    tokenizer.padding_side = "left"
+    tokenizer.clean_up_tokenization_spaces = False
+    tokenizer.add_bos_token = False
+    tokenizer.add_eos_token = False
+    if hasattr(model_config, "n_positions"):
+        n_positions = getattr(model_config, "n_positions")
+        if n_positions:
+            tokenizer.model_max_length = n_positions
+    if hasattr(model_config, "max_position_embeddings"):
+        max_position_embeddings = getattr(model_config, "max_position_embeddings")
+        if max_position_embeddings:
+            tokenizer.model_max_length = max_position_embeddings
+
+    print("Vocab size: ", tokenizer.vocab_size)
+    print("PAD: ", tokenizer.pad_token_id, tokenizer.pad_token)
+    print("BOS: ", tokenizer.bos_token_id, tokenizer.bos_token)
+    print("EOS: ", tokenizer.eos_token_id, tokenizer.eos_token)
+    print("UNK: ", tokenizer.unk_token_id, tokenizer.unk_token)
+    print("SEP: ", tokenizer.sep_token_id, tokenizer.sep_token)
+    return tokenizer
+
+
+def fix_model(model, tokenizer, use_resize=True):
+    model.config.pad_token_id = tokenizer.pad_token_id
+    assert model.config.pad_token_id is not None
+
+    model.config.bos_token_id = tokenizer.bos_token_id
+    model.config.decoder_start_token_id = model.config.bos_token_id
+    assert model.config.bos_token_id is not None
+
+    model.config.eos_token_id = tokenizer.eos_token_id
+    assert model.config.eos_token_id is not None
+
+    model.config.unk_token_id = tokenizer.unk_token_id
+    assert model.config.unk_token_id is not None
+
+    if use_resize:
+        model.resize_token_embeddings(len(tokenizer))
+
+    return model
+
+
 # optimized for RTX 3090 and A100. for larger GPUs, increase some of these?
-MICRO_BATCH_SIZE = 1  # this could actually be 5 but i like powers of 2
-BATCH_SIZE = 8
+MICRO_BATCH_SIZE = 2  # this could actually be 5 but i like powers of 2
+BATCH_SIZE = 32
 GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
 EPOCHS = 3  # we don't always need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
 CUTOFF_LEN = 256  # 256 accounts for about 96% of the data
-LORA_R = 8
+LORA_R = 4
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
 VAL_SET_SIZE = 2000
@@ -66,6 +171,10 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
+model_config = AutoConfig.from_pretrained(model_name)
+tokenizer = fix_tokenizer(tokenizer, model_config) # Maybe to comment
+model = fix_model(model, tokenizer, use_resize=False) # Maybe to comment
+
 model = prepare_model_for_kbit_training(model)
 
 config = LoraConfig(
@@ -77,6 +186,7 @@ config = LoraConfig(
     task_type="CAUSAL_LM",
 )
 model = get_peft_model(model, config)
+model.config.max_length = CUTOFF_LEN
 tokenizer.pad_token = tokenizer.eos_token
 #tokenizer.pad_token_id = 0  # unk. we want this to be different from the eos token
 #data = load_dataset("json", data_files=DATA_PATH)
@@ -91,14 +201,11 @@ val_data = load_dataset("json", data_files="data/val_data.json")["train"]
 def generate_prompt(data_point, without_system=True):
     # sorry about the formatting disaster gotta move fast
     if without_system and data_point["input"]:
-        return f"""### Task:
-{data_point["instruction"]}
+        return f"""### Task: {data_point["instruction"]}
 
-### Input:
-{data_point["input"]}
+### Input: {data_point["input"]}
 
-### Output:
-{data_point["output"]}"""
+### Output: {data_point["output"]}"""
     if data_point["input"]:
         return f"""Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
@@ -135,7 +242,7 @@ def tokenize(prompt):
     }
 
 
-def generate_and_tokenize_prompt(data_point):
+def generate_and_tokenize_prompt(data_point, without_system=True):
     # This function masks out the labels for the input,
     # so that our loss is computed only on the response.
     user_prompt = (
@@ -162,6 +269,12 @@ def generate_and_tokenize_prompt(data_point):
 """
         )
     )
+    if without_system:
+        user_prompt = f"""### Task: {data_point["instruction"]}
+
+### Input: {data_point["input"]}
+
+### Output: """
     len_user_prompt_tokens = (
         len(
             tokenizer(
@@ -190,7 +303,7 @@ def generate_and_tokenize_prompt(data_point):
 train_data = train_data.shuffle().map(generate_and_tokenize_prompt)
 val_data = val_data.shuffle().map(generate_and_tokenize_prompt)
 
-data_collator = transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False)
+data_collator = transformers.DataCollatorForTokenClassification(tokenizer)
 
 trainer = transformers.Trainer(
     model=model,
@@ -205,11 +318,12 @@ trainer = transformers.Trainer(
         learning_rate=LEARNING_RATE,
         fp16=True,
         logging_steps=1,
+        evaluation_strategy="epoch",
         #evaluation_strategy="epoch",
         #save_strategy="epoch",
-        eval_steps=200,
-        save_steps=200,
-        output_dir="mistral_finetune_1",
+        #eval_steps=200,
+        save_steps=100,
+        output_dir=MODEL_OUTPUT,
         #save_total_limit=3,
         #load_best_model_at_end=True,
     ),
@@ -233,6 +347,6 @@ with wandb.init(project="Instruction NER") as run:
     trainer.train() #if resume, choose True, else False
     #torch.save(model.state_dict(), f"final_mistral_1.pth")
 
-model.save_pretrained("mistral_finetune_1")
+model.save_pretrained(MODEL_OUTPUT)
 
 print("\n If there's a warning about missing keys above, please disregard :)")
