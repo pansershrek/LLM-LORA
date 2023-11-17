@@ -38,6 +38,13 @@ from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 
 MODEL_OUTPUT = "mistral_finetune_2"
 
+def _check_candidates(candidates, bad_ids, tokenizer, backup_token):
+    for token_id in candidates:
+        if token_id not in bad_ids:
+            token = tokenizer.convert_ids_to_tokens(token_id)
+            return token_id, token
+    return None, backup_token
+
 def fix_tokenizer(tokenizer, model_config):
     bad_ids = (None, tokenizer.vocab_size)
 
