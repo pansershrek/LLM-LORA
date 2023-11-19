@@ -79,6 +79,7 @@ def main():
         )
         model = prepare_model_for_kbit_training(model)
         model = PeftModel.from_pretrained(model, args.lora_weights)
+        model.config.max_length = 256
         tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     else:
         print("Work only with cuda")
@@ -118,7 +119,7 @@ def main():
                 generation_config=generation_config,
                 return_dict_in_generate=True,
                 output_scores=True,
-                max_new_tokens=512,
+                max_new_tokens=256,
                 #bad_words_ids=bad_words_ids
             )
         s = generation_output.sequences[0]
