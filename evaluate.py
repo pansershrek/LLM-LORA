@@ -11,6 +11,11 @@ from transformers.models.opt.modeling_opt import OPTDecoderLayer
 from sklearn.metrics import classification_report
 
 def generate_prompt(instruction, input=None):
+    return f"""### Task: {instruction}
+
+### Input: {input}
+
+### Output: """
     if input:
         return f"""Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
@@ -57,10 +62,10 @@ def check(x):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--lora_weights", default="/home/admin/LLM-LORA/mistral_finetune")
-    parser.add_argument("--model_name", default="mistralai/Mistral-7B-Instruct-v0.1")
+    parser.add_argument("--lora_weights", default="/home/admin/LLM-LORA/mistral_finetune_2")
+    parser.add_argument("--model_name", default="meta-llama/Llama-2-13b-hf")
     parser.add_argument("--data_path", default="/home/admin/LLM-LORA/data/val_data.json")
-    parser.add_argument("--output_path", default="model_outputs.csv")
+    parser.add_argument("--output_path", default="model_outputs_Llama-2-13b-hf.csv")
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
 
@@ -99,7 +104,7 @@ def main():
 
         #generation_config.renormalize_logits = True
         #whitelist = (
-        #    [data["input"].split(" ")] +
+        #    prompt.split(" ") +
         #    ["PER:", "ORG:", "LOC:", "MISC:"] +
         #    ["PER:\n", "ORG:\n", "LOC:\n", "MISC:\n", "\n"]
         #)
@@ -117,7 +122,7 @@ def main():
                 #bad_words_ids=bad_words_ids
             )
         s = generation_output.sequences[0]
-        output = tokenizer.decode(s).split("### Response:")[1].strip()
+        output = tokenizer.decode(s).split("### Output:")[1].strip()
         ans = {
             "ground_truth": data["raw_entities"],
             "predict": {x: [] for x in ENTITIES},
@@ -130,8 +135,9 @@ def main():
         output_list = output.split("\n")
         for entity in ENTITIES:
             for row in output_list:
-                if row.startswith(entity+":"):
-                    tmp_row = row.split(entity+":")[-1]
+                #if row.startswith(entity+":"):
+                if entity in row:
+                    tmp_row = row.split(entity+":")[-1].strip()
                     tmp_row = [y.strip().replace("</s>", "") for y in tmp_row.split(",")]
                     tmp_row = [y.lower() for y in tmp_row if not check(y)]
                     ans["predict"][entity] = tmp_row
