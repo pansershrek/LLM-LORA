@@ -36,7 +36,7 @@ from transformers import (AutoModelForCausalLM, AutoTokenizer, AutoConfig,
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 
 
-MODEL_OUTPUT = "mistral_finetune_2"
+MODEL_OUTPUT = "mistral_finetune_3"
 
 
 # optimized for RTX 3090 and A100. for larger GPUs, increase some of these?
@@ -54,7 +54,7 @@ TARGET_MODULES = [
     "q_proj", "k_proj", "v_proj", "o_proj"
 ]
 
-model_name = "meta-llama/Llama-2-13b-hf" #"mistralai/Mistral-7B-Instruct-v0.1"
+model_name = "mistralai/Mistral-7B-Instruct-v0.1" #"meta-llama/Llama-2-13b-hf" #"mistralai/Mistral-7B-Instruct-v0.1"
 #model_name = "bigscience/bloom-1b1"
 #model_name = "bigscience/bloom-1b7"
 #model_name = "bigscience/bloom-3b"
@@ -63,7 +63,7 @@ model_name = "meta-llama/Llama-2-13b-hf" #"mistralai/Mistral-7B-Instruct-v0.1"
 
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
-    device_map='cuda:0',
+    device_map='cuda:1',
     load_in_8bit=True,
     use_flash_attention_2=True
 )
@@ -192,8 +192,9 @@ def generate_and_tokenize_prompt(data_point, without_system=True):
     )["input_ids"][:-1]
     return {
         "input_ids": full_tokens,
-        "labels": [-100] * len_user_prompt_tokens
-        + full_tokens[len_user_prompt_tokens:],
+        "labels": full_tokens,
+        #"labels": [-100] * len_user_prompt_tokens
+        #+ full_tokens[len_user_prompt_tokens:],
         "attention_mask": [1] * (len(full_tokens)),
     }
 
