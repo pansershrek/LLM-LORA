@@ -40,9 +40,8 @@ MODEL_OUTPUT = "mistral_finetune_4"
 
 
 # optimized for RTX 3090 and A100. for larger GPUs, increase some of these?
-MICRO_BATCH_SIZE = 32  # this could actually be 5 but i like powers of 2
-BATCH_SIZE = MICRO_BATCH_SIZE * 4
-GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
+MICRO_BATCH_SIZE = 2  # this could actually be 5 but i like powers of 2
+GRADIENT_ACCUMULATION_STEPS = 16
 EPOCHS = 3  # we don't always need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
 CUTOFF_LEN = 512  # 256 accounts for about 96% of the data
@@ -62,7 +61,7 @@ model_name = "mistralai/Mistral-7B-Instruct-v0.1" #"meta-llama/Llama-2-13b-hf" #
 
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
-    device_map='auto',
+    device_map='cuda:0',
     load_in_8bit=True,
     use_flash_attention_2=True
 )
