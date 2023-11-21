@@ -44,7 +44,7 @@ MICRO_BATCH_SIZE = 2  # this could actually be 5 but i like powers of 2
 GRADIENT_ACCUMULATION_STEPS = 16
 EPOCHS = 3  # we don't always need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
-CUTOFF_LEN = 512  # 256 accounts for about 96% of the data
+CUTOFF_LEN = 256  # 256 accounts for about 96% of the data
 LORA_R = 4
 LORA_ALPHA = LORA_R * 2
 LORA_DROPOUT = 0.05
@@ -97,38 +97,6 @@ model.config.max_length = CUTOFF_LEN
 train_data = load_dataset("json", data_files="data/train_data.json")["train"]
 val_data = load_dataset("json", data_files="data/val_data.json")["train"]
 
-
-def generate_prompt(data_point, without_system=False):
-    # sorry about the formatting disaster gotta move fast
-    if data_point["output"][-1] == "\n":
-        data_point["output"] = data_point[:-1] + "</s>"
-    if without_system and data_point["input"]:
-        return f"""### Task: {data_point["instruction"]}
-
-### Input: {data_point["input"]}
-
-### Output: {data_point["output"]}"""
-    if data_point["input"]:
-        return f"""Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
-
-### Instruction:
-{data_point["instruction"]}
-
-### Input:
-{data_point["input"]}
-
-### Response:
-{data_point["output"]}"""
-    else:
-        return f"""Below is an instruction that describes a task. Write a response that appropriately completes the request.
-
-### Instruction:
-{data_point["instruction"]}
-
-### Response:
-{data_point["output"]}"""
-
-
 def tokenize(prompt):
     # there's probably a way to do this with the tokenizer settings
     # but again, gotta move fast
@@ -144,20 +112,12 @@ def tokenize(prompt):
     }
 
 
-def generate_and_tokenize_prompt(data_point, without_system=True):
+def generate_and_tokenize_prompt(data_point):
     # This function masks out the labels for the input,
     # so that our loss is computed only on the response.
     user_prompt = (
         (
-            f"""Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
-
-### Instruction:
-{data_point["instruction"]}
-
-### Input:
-{data_point["input"]}
-
-### Response:
+            f"""<s>[INST]{data_point["instruction"]}. Here are the inputs: {data_point["input"]} [/INST] \\n 
 """
         )
         if data_point["input"]
@@ -171,12 +131,6 @@ def generate_and_tokenize_prompt(data_point, without_system=True):
 """
         )
     )
-    if without_system:
-        user_prompt = f"""### Task: {data_point["instruction"]}
-
-### Input: {data_point["input"]}
-
-### Output: """
     len_user_prompt_tokens = (
         len(
             tokenizer(
@@ -189,7 +143,7 @@ def generate_and_tokenize_prompt(data_point, without_system=True):
         - 1
     )  # no eos token
     full_tokens = tokenizer(
-        user_prompt + data_point["output"],
+        user_prompt + data_point["output"]+" </s>",
         truncation=True,
         max_length=CUTOFF_LEN + 1,
         padding="max_length",
