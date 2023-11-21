@@ -7,11 +7,10 @@ import transformers
 import pandas as pd
 
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BloomForCausalLM, GenerationConfig
-from transformers.models.opt.modeling_opt import OPTDecoderLayer
 from sklearn.metrics import classification_report
 
-from vllm import LLM, SamplingParams
-
+import ctranslate2
+import sentencepiece as spm
 
 def generate_prompt(instruction, input=None):
     return f"""### Task: {instruction}
@@ -74,25 +73,25 @@ def main():
     args = parser.parse_args()
 
     if args.device == "cuda":
-        model = AutoModelForCausalLM.from_pretrained(
-            args.model_name,
-            load_in_8bit=True,
-            torch_dtype=torch.float16,
-            device_map='cuda:0',
-            use_flash_attention_2=True
-        )
-        model = prepare_model_for_kbit_training(model)
-        model = PeftModel.from_pretrained(model, args.lora_weights)
-        model.config.max_length = 256
-        model = model.merge_and_unload()
+        # model = AutoModelForCausalLM.from_pretrained(
+        #     args.model_name,
+        #     load_in_8bit=True,
+        #     torch_dtype=torch.float16,
+        #     device_map='cuda:0',
+        #     use_flash_attention_2=True
+        # )
+        # model = prepare_model_for_kbit_training(model)
+        # model = PeftModel.from_pretrained(model, args.lora_weights)
+        # model.config.max_length = 256
+        # model = model.merge_and_unload()
         tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-        model.save_pretrained(args.new_full_model)
-        tokenizer.save_pretrained(args.new_full_model)
-        model = LLM(model=args.new_full_model)
-        sampling_params = SamplingParams(
-            top_k=50, top_p=0.9, temperature=0.6,
-            early_stopping=False, max_tokens=256
+        # model.save_pretrained(args.new_full_model)
+        # tokenizer.save_pretrained(args.new_full_model)
+        generator = ctranslate2.Generator(
+            "/home/admin/LLM-LORA/new_full_model_converted",
+            device="cuda:0"
         )
+
     else:
         print("Work only with cuda")
         exit(0)
@@ -111,6 +110,10 @@ def main():
         prompt = generate_prompt(
             data["instruction"], data["input"]
         )
+        start_tokens = tokenizer.convert_ids_to_tokens(tokenizer.encode(prompt))
+        results = generator.generate_batch([start_tokens], max_length=30, sampling_topk=10)
+        print(tokenizer.decode(results[0].sequences_ids[0]))
+        exit()
         #inputs = tokenizer(prompt, return_tensors="pt")
         #input_ids = inputs["input_ids"].to("cuda:0")
         
