@@ -10,6 +10,9 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BloomFor
 from transformers.models.opt.modeling_opt import OPTDecoderLayer
 from sklearn.metrics import classification_report
 
+from vllm import LLM, SamplingParams
+
+
 def generate_prompt(instruction, input=None):
     return f"""### Task: {instruction}
 
@@ -67,6 +70,7 @@ def main():
     parser.add_argument("--data_path", default="/home/admin/LLM-LORA/data/val_data.json")
     parser.add_argument("--output_path", default="model_outputs_Llama-2-13b-hf.csv")
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--new_full_model", default="/home/admin/LLM-LORA/new_full_model")
     args = parser.parse_args()
 
     if args.device == "cuda":
@@ -80,14 +84,22 @@ def main():
         model = prepare_model_for_kbit_training(model)
         model = PeftModel.from_pretrained(model, args.lora_weights)
         model.config.max_length = 256
+        model = model.merge_and_unload()
         tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+        model.save_pretrained(args.new_full_model)
+        tokenizer.save_pretrained(args.new_full_model)
+        model = LLM(model=args.new_full_model)
+        sampling_params = SamplingParams(
+            top_k=50, top_p=0.9, temperature=0.6,
+            early_stopping=False, max_tokens=256
+        )
     else:
         print("Work only with cuda")
         exit(0)
 
-    model.eval()
-    if torch.__version__ >= "2":
-        model = torch.compile(model)
+    #model.eval()
+    #if torch.__version__ >= "2":
+    #    model = torch.compile(model)
 
     with open(args.data_path, "r") as f:
         val_data = json.loads(f.read())
@@ -99,9 +111,9 @@ def main():
         prompt = generate_prompt(
             data["instruction"], data["input"]
         )
-        inputs = tokenizer(prompt, return_tensors="pt")
-        input_ids = inputs["input_ids"].to("cuda:0")
-        generation_config = GenerationConfig.from_pretrained(args.model_name)
+        #inputs = tokenizer(prompt, return_tensors="pt")
+        #input_ids = inputs["input_ids"].to("cuda:0")
+        
 
         #generation_config.renormalize_logits = True
         #whitelist = (
@@ -114,14 +126,15 @@ def main():
 
 
         with torch.no_grad():
-            generation_output = model.generate(
-                input_ids=input_ids,
-                generation_config=generation_config,
-                return_dict_in_generate=True,
-                output_scores=True,
-                max_new_tokens=256,
+            #generation_output = model.generate(
+            #    input_ids=input_ids,
+            #    generation_config=generation_config,
+            #    return_dict_in_generate=True,
+            #    output_scores=True,
+            #    max_new_tokens=256,
                 #bad_words_ids=bad_words_ids
-            )
+            #)
+            generation_output = model.generate(prompt, sampling_params)
         s = generation_output.sequences[0]
         output = tokenizer.decode(s).split("### Output:")[1].strip()
         ans = {

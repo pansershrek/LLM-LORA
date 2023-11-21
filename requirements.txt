@@ -8,5 +8,3 @@ git+https://github.com/huggingface/peft.git
 gradio
 appdirs
 scikit-learn
-flash-attn
-#vllm
