@@ -44,7 +44,7 @@ MICRO_BATCH_SIZE = 2  # this could actually be 5 but i like powers of 2
 GRADIENT_ACCUMULATION_STEPS = 16
 EPOCHS = 3  # we don't always need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
-CUTOFF_LEN = 256  # 256 accounts for about 96% of the data
+CUTOFF_LEN = 512  # 256 accounts for about 96% of the data
 LORA_R = 4
 LORA_ALPHA = LORA_R * 2
 LORA_DROPOUT = 0.05
@@ -115,22 +115,16 @@ def tokenize(prompt):
 def generate_and_tokenize_prompt(data_point):
     # This function masks out the labels for the input,
     # so that our loss is computed only on the response.
-    user_prompt = (
-        (
-            f"""<s>[INST]{data_point["instruction"]}. Here are the inputs: {data_point["input"]} [/INST] \\n 
-"""
-        )
-        if data_point["input"]
-        else (
-            f"""Below is an instruction that describes a task. Write a response that appropriately completes the request.
+    user_prompt = f"""<s>Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
 ### Instruction:
 {data_point["instruction"]}
 
+### Input:
+{data_point["input"]}
+
 ### Response:
 """
-        )
-    )
     len_user_prompt_tokens = (
         len(
             tokenizer(
