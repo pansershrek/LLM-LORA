@@ -47,7 +47,7 @@ EPOCHS = 3  # we don't always need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
 CUTOFF_LEN = 512  # 256 accounts for about 96% of the data
 LORA_R = 4
-LORA_ALPHA = 16
+LORA_ALPHA = LORA_R * 2
 LORA_DROPOUT = 0.05
 TARGET_MODULES = [
     "q_proj", "k_proj", "v_proj", "o_proj"
@@ -62,7 +62,7 @@ model_name = "mistralai/Mistral-7B-Instruct-v0.1" #"meta-llama/Llama-2-13b-hf" #
 
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
-    device_map='cuda:0',
+    device_map='auto',
     load_in_8bit=True,
     use_flash_attention_2=True
 )
@@ -83,8 +83,12 @@ config = LoraConfig(
     task_type="CAUSAL_LM",
 )
 model = get_peft_model(model, config)
+#tokenizer.pad_token = tokenizer.eos_token
+tokenizer.pad_token = tokenizer.unk_token
+tokenizer.padding_side = "right"
+
+model.config.pad_token_id = tokenizer.pad_token_id
 model.config.max_length = CUTOFF_LEN
-tokenizer.pad_token = tokenizer.eos_token
 #tokenizer.pad_token_id = 0  # unk. we want this to be different from the eos token
 #data = load_dataset("json", data_files=DATA_PATH)
 
@@ -97,6 +101,8 @@ val_data = load_dataset("json", data_files="data/val_data.json")["train"]
 
 def generate_prompt(data_point, without_system=False):
     # sorry about the formatting disaster gotta move fast
+    if data_point["output"][-1] == "\n":
+        data_point["output"] = data_point[:-1] + "</s>"
     if without_system and data_point["input"]:
         return f"""### Task: {data_point["instruction"]}
 
@@ -191,9 +197,9 @@ def generate_and_tokenize_prompt(data_point, without_system=True):
     )["input_ids"][:-1]
     return {
         "input_ids": full_tokens,
-        "labels": full_tokens,
-        #"labels": [-100] * len_user_prompt_tokens
-        #+ full_tokens[len_user_prompt_tokens:],
+        #"labels": full_tokens,
+        "labels": [-100] * len_user_prompt_tokens
+        + full_tokens[len_user_prompt_tokens:],
         "attention_mask": [1] * (len(full_tokens)),
     }
 
