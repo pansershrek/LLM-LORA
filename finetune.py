@@ -63,7 +63,7 @@ model_name = "mistralai/Mistral-7B-Instruct-v0.1" #"meta-llama/Llama-2-13b-hf" #
 
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
-    device_map='cuda:1',
+    device_map='cuda:0',
     load_in_8bit=True,
     use_flash_attention_2=True
 )
