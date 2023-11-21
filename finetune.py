@@ -40,8 +40,8 @@ MODEL_OUTPUT = "mistral_finetune_4"
 
 
 # optimized for RTX 3090 and A100. for larger GPUs, increase some of these?
-MICRO_BATCH_SIZE = 2  # this could actually be 5 but i like powers of 2
-BATCH_SIZE = 32
+MICRO_BATCH_SIZE = 4  # this could actually be 5 but i like powers of 2
+BATCH_SIZE = MICRO_BATCH_SIZE * 4
 GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
 EPOCHS = 3  # we don't always need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
