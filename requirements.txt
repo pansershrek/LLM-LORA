@@ -9,4 +9,4 @@ gradio
 appdirs
 scikit-learn
 flash-attn
-vllm
+#vllm
