@@ -89,7 +89,7 @@ def main():
         # tokenizer.save_pretrained(args.new_full_model)
         generator = ctranslate2.Generator(
             "/home/admin/LLM-LORA/new_full_model_converted",
-            device="cuda:0"
+            device="cuda"
         )
 
     else:
