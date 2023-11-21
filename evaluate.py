@@ -7,17 +7,10 @@ import transformers
 import pandas as pd
 
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BloomForCausalLM, GenerationConfig
+from transformers.models.opt.modeling_opt import OPTDecoderLayer
 from sklearn.metrics import classification_report
 
-import ctranslate2
-import sentencepiece as spm
-
 def generate_prompt(instruction, input=None):
-    return f"""### Task: {instruction}
-
-### Input: {input}
-
-### Output: """
     if input:
         return f"""Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
@@ -64,41 +57,32 @@ def check(x):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--lora_weights", default="/home/admin/LLM-LORA/mistral_finetune_2")
-    parser.add_argument("--model_name", default="meta-llama/Llama-2-13b-hf")
+    parser.add_argument("--lora_weights", default="/home/admin/LLM-LORA/mistral_finetune")
+    parser.add_argument("--model_name", default="mistralai/Mistral-7B-Instruct-v0.1")
     parser.add_argument("--data_path", default="/home/admin/LLM-LORA/data/val_data.json")
-    parser.add_argument("--output_path", default="model_outputs_Llama-2-13b-hf.csv")
+    parser.add_argument("--output_path", default="model_outputs.csv")
+    parser.add_argument("--output_f1_path", default="model_output_f1.txt")
     parser.add_argument("--device", default="cuda")
-    parser.add_argument("--new_full_model", default="/home/admin/LLM-LORA/new_full_model")
     args = parser.parse_args()
 
     if args.device == "cuda":
-        # model = AutoModelForCausalLM.from_pretrained(
-        #     args.model_name,
-        #     load_in_8bit=True,
-        #     torch_dtype=torch.float16,
-        #     device_map='cuda:0',
-        #     use_flash_attention_2=True
-        # )
-        # model = prepare_model_for_kbit_training(model)
-        # model = PeftModel.from_pretrained(model, args.lora_weights)
-        # model.config.max_length = 256
-        # model = model.merge_and_unload()
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-        # model.save_pretrained(args.new_full_model)
-        # tokenizer.save_pretrained(args.new_full_model)
-        generator = ctranslate2.Generator(
-            "/home/admin/LLM-LORA/new_full_model_converted",
-            device="cuda"
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_name,
+            load_in_8bit=True,
+            torch_dtype=torch.float16,
+            device_map='cuda:0',
+            use_flash_attention_2=True
         )
-
+        model = prepare_model_for_kbit_training(model)
+        model = PeftModel.from_pretrained(model, args.lora_weights)
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     else:
         print("Work only with cuda")
         exit(0)
 
-    #model.eval()
-    #if torch.__version__ >= "2":
-    #    model = torch.compile(model)
+    model.eval()
+    if torch.__version__ >= "2":
+        model = torch.compile(model)
 
     with open(args.data_path, "r") as f:
         val_data = json.loads(f.read())
@@ -110,17 +94,13 @@ def main():
         prompt = generate_prompt(
             data["instruction"], data["input"]
         )
-        start_tokens = tokenizer.convert_ids_to_tokens(tokenizer.encode(prompt))
-        results = generator.generate_batch([start_tokens], max_length=30, sampling_topk=10)
-        print(tokenizer.decode(results[0].sequences_ids[0]))
-        exit()
-        #inputs = tokenizer(prompt, return_tensors="pt")
-        #input_ids = inputs["input_ids"].to("cuda:0")
-        
+        inputs = tokenizer(prompt, return_tensors="pt")
+        input_ids = inputs["input_ids"].to("cuda:0")
+        generation_config = GenerationConfig.from_pretrained(args.model_name)
 
         #generation_config.renormalize_logits = True
         #whitelist = (
-        #    prompt.split(" ") +
+        #    [data["input"].split(" ")] +
         #    ["PER:", "ORG:", "LOC:", "MISC:"] +
         #    ["PER:\n", "ORG:\n", "LOC:\n", "MISC:\n", "\n"]
         #)
@@ -129,17 +109,16 @@ def main():
 
 
         with torch.no_grad():
-            #generation_output = model.generate(
-            #    input_ids=input_ids,
-            #    generation_config=generation_config,
-            #    return_dict_in_generate=True,
-            #    output_scores=True,
-            #    max_new_tokens=256,
+            generation_output = model.generate(
+                input_ids=input_ids,
+                generation_config=generation_config,
+                return_dict_in_generate=True,
+                output_scores=True,
+                max_new_tokens=512,
                 #bad_words_ids=bad_words_ids
-            #)
-            generation_output = model.generate(prompt, sampling_params)
+            )
         s = generation_output.sequences[0]
-        output = tokenizer.decode(s).split("### Output:")[1].strip()
+        output = tokenizer.decode(s).split("### Response:")[1].strip()
         ans = {
             "ground_truth": data["raw_entities"],
             "predict": {x: [] for x in ENTITIES},
@@ -152,9 +131,8 @@ def main():
         output_list = output.split("\n")
         for entity in ENTITIES:
             for row in output_list:
-                #if row.startswith(entity+":"):
-                if entity in row:
-                    tmp_row = row.split(entity+":")[-1].strip()
+                if entity+":" in row:
+                    tmp_row = row.split(entity+":")[-1]
                     tmp_row = [y.strip().replace("</s>", "") for y in tmp_row.split(",")]
                     tmp_row = [y.lower() for y in tmp_row if not check(y)]
                     ans["predict"][entity] = tmp_row
@@ -188,7 +166,7 @@ def main():
         ground_truth += x["ground_truth_ner_classes"]
         predict += x["predict_ner_classes"]
 
-    with open("f1_score.txt", "w") as f:
+    with open(args.output_f1_path, "w") as f:
         print(
             classification_report(
                 ground_truth, predict,

@@ -36,7 +36,7 @@ from transformers import (AutoModelForCausalLM, AutoTokenizer, AutoConfig,
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 
 
-MODEL_OUTPUT = "mistral_finetune_3"
+MODEL_OUTPUT = "mistral_finetune_4"
 
 
 # optimized for RTX 3090 and A100. for larger GPUs, increase some of these?
@@ -45,11 +45,10 @@ BATCH_SIZE = 32
 GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
 EPOCHS = 3  # we don't always need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
-CUTOFF_LEN = 256  # 256 accounts for about 96% of the data
+CUTOFF_LEN = 512  # 256 accounts for about 96% of the data
 LORA_R = 4
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
-VAL_SET_SIZE = 2000
 TARGET_MODULES = [
     "q_proj", "k_proj", "v_proj", "o_proj"
 ]
@@ -96,7 +95,7 @@ train_data = load_dataset("json", data_files="data/train_data.json")["train"]
 val_data = load_dataset("json", data_files="data/val_data.json")["train"]
 
 
-def generate_prompt(data_point, without_system=True):
+def generate_prompt(data_point, without_system=False):
     # sorry about the formatting disaster gotta move fast
     if without_system and data_point["input"]:
         return f"""### Task: {data_point["instruction"]}
