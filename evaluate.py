@@ -57,11 +57,11 @@ def check(x):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--lora_weights", default="/home/admin/LLM-LORA/mistral_finetune")
+    parser.add_argument("--lora_weights", default="/home/admin/LLM-LORA/mistral_finetune_4")
     parser.add_argument("--model_name", default="mistralai/Mistral-7B-Instruct-v0.1")
     parser.add_argument("--data_path", default="/home/admin/LLM-LORA/data/val_data.json")
-    parser.add_argument("--output_path", default="model_outputs.csv")
-    parser.add_argument("--output_f1_path", default="model_output_f1.txt")
+    parser.add_argument("--output_path", default="model_outputs_4.csv")
+    parser.add_argument("--output_f1_path", default="model_output_f1_4.txt")
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
 
