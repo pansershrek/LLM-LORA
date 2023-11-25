@@ -10,9 +10,12 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BloomFor
 from transformers.models.opt.modeling_opt import OPTDecoderLayer
 from sklearn.metrics import classification_report
 
+from vllm import MistralForCausalLM, SamplingParams
+
+
 def generate_prompt(instruction, input=None):
     if input:
-        return f"""Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+        return f"""<s>Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
 ### Instruction:
 {instruction}
@@ -20,7 +23,8 @@ def generate_prompt(instruction, input=None):
 ### Input:
 {input}
 
-### Response:"""
+### Response:
+"""
     else:
         return f"""Below is an instruction that describes a task. Write a response that appropriately completes the request.
 
@@ -57,11 +61,12 @@ def check(x):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--lora_weights", default="/home/admin/LLM-LORA/mistral_finetune_4")
+    parser.add_argument("--lora_weights", default="/data/LLM-LORA/mistral_finetune_4")
     parser.add_argument("--model_name", default="mistralai/Mistral-7B-Instruct-v0.1")
-    parser.add_argument("--data_path", default="/home/admin/LLM-LORA/data/val_data.json")
+    parser.add_argument("--data_path", default="//data/LLM-LORA/data/val_data.json")
     parser.add_argument("--output_path", default="model_outputs_4.csv")
-    parser.add_argument("--output_f1_path", default="model_output_f1_4.txt")
+    parser.add_argument("--output_f1_path", default="model_output_f1_5.txt")
+    parser.add_argument("--new_weights_path", default="new_weights")
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
 
@@ -75,14 +80,18 @@ def main():
         )
         model = prepare_model_for_kbit_training(model)
         model = PeftModel.from_pretrained(model, args.lora_weights)
+        model.merge_and_unload()
         tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+        model.save_pretrained(args.new_weights_path)
+        model = MistralForCausalLM(args.new_weights_path)
+        sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
     else:
         print("Work only with cuda")
         exit(0)
 
-    model.eval()
-    if torch.__version__ >= "2":
-        model = torch.compile(model)
+    # model.eval()
+    # if torch.__version__ >= "2":
+    #     model = torch.compile(model)
 
     with open(args.data_path, "r") as f:
         val_data = json.loads(f.read())
@@ -96,7 +105,7 @@ def main():
         )
         inputs = tokenizer(prompt, return_tensors="pt")
         input_ids = inputs["input_ids"].to("cuda:0")
-        generation_config = GenerationConfig.from_pretrained(args.model_name)
+        #generation_config = GenerationConfig.from_pretrained(args.model_name)
 
         #generation_config.renormalize_logits = True
         #whitelist = (
@@ -108,16 +117,19 @@ def main():
         #bad_words_ids=[[id] for id in range(tokenizer.vocab_size) if id not in whitelist_ids]
 
 
-        with torch.no_grad():
-            generation_output = model.generate(
-                input_ids=input_ids,
-                generation_config=generation_config,
-                return_dict_in_generate=True,
-                output_scores=True,
-                max_new_tokens=512,
-                #bad_words_ids=bad_words_ids
-            )
-        s = generation_output.sequences[0]
+        # with torch.no_grad():
+        #     generation_output = model.generate(
+        #         input_ids=input_ids,
+        #         generation_config=generation_config,
+        #         return_dict_in_generate=True,
+        #         output_scores=True,
+        #         max_new_tokens=512,
+        #         #bad_words_ids=bad_words_ids
+        #     )
+        # s = generation_output.sequences[0]
+        outputs = llm.generate([prompt], sampling_params)
+        print(outputs)
+        exit(0)
         output = tokenizer.decode(s).split("### Response:")[1].strip()
         ans = {
             "ground_truth": data["raw_entities"],
