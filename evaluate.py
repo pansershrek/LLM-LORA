@@ -71,18 +71,18 @@ def main():
     args = parser.parse_args()
 
     if args.device == "cuda":
-        model = AutoModelForCausalLM.from_pretrained(
-            args.model_name,
-            load_in_8bit=True,
-            torch_dtype=torch.float16,
-            device_map='cuda:0',
-            use_flash_attention_2=True
-        )
-        model = prepare_model_for_kbit_training(model)
-        model = PeftModel.from_pretrained(model, args.lora_weights)
-        model.merge_and_unload()
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-        model.save_pretrained(args.new_weights_path)
+        # model = AutoModelForCausalLM.from_pretrained(
+        #     args.model_name,
+        #     load_in_8bit=True,
+        #     torch_dtype=torch.float16,
+        #     device_map='cuda:0',
+        #     use_flash_attention_2=True
+        # )
+        # model = prepare_model_for_kbit_training(model)
+        # model = PeftModel.from_pretrained(model, args.lora_weights)
+        # model.merge_and_unload()
+        # tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+        # model.save_pretrained(args.new_weights_path)
         model = LLM(args.new_weights_path)
         sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
     else:
