@@ -103,8 +103,8 @@ def main():
         prompt = generate_prompt(
             data["instruction"], data["input"]
         )
-        inputs = tokenizer(prompt, return_tensors="pt")
-        input_ids = inputs["input_ids"].to("cuda:0")
+        #inputs = tokenizer(prompt, return_tensors="pt")
+        #input_ids = inputs["input_ids"].to("cuda:0")
         #generation_config = GenerationConfig.from_pretrained(args.model_name)
 
         #generation_config.renormalize_logits = True
