@@ -129,6 +129,8 @@ def main():
         # s = generation_output.sequences[0]
         outputs = model.generate([prompt], sampling_params)
         print(outputs)
+        for output in outputs:
+            print(output.outputs[0].text)
         exit(0)
         output = tokenizer.decode(s).split("### Response:")[1].strip()
         ans = {
