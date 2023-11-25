@@ -10,7 +10,7 @@ from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BloomFor
 from transformers.models.opt.modeling_opt import OPTDecoderLayer
 from sklearn.metrics import classification_report
 
-from vllm import MistralForCausalLM, SamplingParams
+from vllm import LLM, SamplingParams
 
 
 def generate_prompt(instruction, input=None):
@@ -83,7 +83,7 @@ def main():
         model.merge_and_unload()
         tokenizer = AutoTokenizer.from_pretrained(args.model_name)
         model.save_pretrained(args.new_weights_path)
-        model = MistralForCausalLM(args.new_weights_path)
+        model = LLM(args.new_weights_path)
         sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
     else:
         print("Work only with cuda")
