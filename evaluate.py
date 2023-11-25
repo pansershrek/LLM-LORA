@@ -84,7 +84,12 @@ def main():
         # tokenizer = AutoTokenizer.from_pretrained(args.model_name)
         # model.save_pretrained(args.new_weights_path)
         model = LLM(args.new_weights_path)
-        sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+        sampling_params = SamplingParams(
+            temperature=1,
+            top_k=50,
+            top_p=1.0,
+            max_tokens=256,
+        )
     else:
         print("Work only with cuda")
         exit(0)
