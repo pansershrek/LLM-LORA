@@ -127,7 +127,7 @@ def main():
         #         #bad_words_ids=bad_words_ids
         #     )
         # s = generation_output.sequences[0]
-        outputs = llm.generate([prompt], sampling_params)
+        outputs = model.generate([prompt], sampling_params)
         print(outputs)
         exit(0)
         output = tokenizer.decode(s).split("### Response:")[1].strip()
