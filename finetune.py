@@ -82,7 +82,7 @@ def main():
             fp16 = config["TRAIN_PARAMS"]["FP16"],
             logging_steps = 1,
             evaluation_strategy="epoch",
-            output_dir = config["TRAIN_PARAMS"]["MODEL_OUTPUT"],
+            output_dir = config["MODEL_OUTPUT"],
         ),
         data_collator=data_collator,
     )
@@ -91,7 +91,7 @@ def main():
         model.print_trainable_parameters()
         trainer.train()
 
-    model.save_pretrained(config["TRAIN_PARAMS"]["MODEL_OUTPUT"])
+    model.save_pretrained(config["MODEL_OUTPUT"])
 
 
 
