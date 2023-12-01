@@ -52,9 +52,6 @@ def main():
     )
     model = get_peft_model(model, config)
 
-    if torch.__version__ >= "2":
-        model = torch.compile(model)
-
     data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
     train_dataset = Conll2003Dataset(
