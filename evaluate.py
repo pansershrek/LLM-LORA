@@ -68,6 +68,7 @@ def main():
     parser.add_argument("--output_f1_path", default="model_output_f1_5.txt")
     parser.add_argument("--new_weights_path", default="new_weights")
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--batch_size", default="16")
     args = parser.parse_args()
 
     if args.device == "cuda":

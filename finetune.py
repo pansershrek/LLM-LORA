@@ -17,7 +17,7 @@ from transformers import (
     TrainingArguments
 )
 
-from datasets.conll2003_dataset import Conll2003Dataset
+from dataset.conll2003_dataset import Conll2003Dataset
 
 
 def main():
