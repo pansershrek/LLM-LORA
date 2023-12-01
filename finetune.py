@@ -1,6 +1,7 @@
 import argparse
 import json
 
+from datasets import load_dataset
 import torch
 import wandb
 from peft import (
@@ -17,8 +18,30 @@ from transformers import (
     TrainingArguments
 )
 
-from dataset.conll2003_dataset import Conll2003Dataset
-
+def get_dataset(data_path, tokenizer, max_length):
+    def tokenize(tmp):
+        input_ids = tokenizer(
+            tmp["full_input"],
+            truncation=True,
+            max_length=max_length,
+            padding="max_length"
+        )["input_ids"]
+        input_ids_not_mask = self.tokenizer(
+            tmp["output"],
+            truncation=True
+        )["input_ids"]
+        mask_len = (
+            len(input_ids) - len(input_ids_not_mask)
+        )
+        return {
+            "input_ids": input_ids,
+            "labels": (
+                [-100] * mask_len + input_ids[mask_len:]
+            ),
+            "attention_mask": [1] * len(input_ids),
+        }
+    dataset = load_dataset("json", data_files=data_path)["train"]
+    return datasets.map(tokenize)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -54,11 +77,11 @@ def main():
 
     data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
-    train_dataset = Conll2003Dataset(
-        "train", tokenizer, config["TRAIN_PARAMS"]["MAX_LEN"]
+    train_dataset = get_dataset(
+        config["TRAIN_DATASET"], config["TRAIN_PARAMS"]["MAX_LEN"]
     )
-    test_dataset = Conll2003Dataset(
-        "test", tokenizer, config["TRAIN_PARAMS"]["MAX_LEN"]
+    test_dataset = get_dataset(
+        config["TEST_DATASET"], config["TRAIN_PARAMS"]["MAX_LEN"]
     )
 
     trainer = Trainer(
@@ -67,8 +90,12 @@ def main():
         eval_dataset = test_dataset,
         args = TrainingArguments(
             report_to = config["TRAIN_PARAMS"]["REPORT_TO"],
-            per_device_train_batch_size = config["TRAIN_PARAMS"]["MICRO_BATCH_SIZE"],
-            gradient_accumulation_steps = config["TRAIN_PARAMS"]["GRADIENT_ACCUMULATION_STEPS"],
+            per_device_train_batch_size = (
+                config["TRAIN_PARAMS"]["MICRO_BATCH_SIZE"]
+            ),
+            gradient_accumulation_steps = (
+                config["TRAIN_PARAMS"]["GRADIENT_ACCUMULATION_STEPS"]
+            ),
             warmup_steps = config["TRAIN_PARAMS"]["WARMUP_STEPS"],
             num_train_epochs = config["TRAIN_PARAMS"]["EPOCHS"],
             learning_rate = config["TRAIN_PARAMS"]["LEARNING_RATE"],
