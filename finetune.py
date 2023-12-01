@@ -30,10 +30,10 @@ def main():
     with open(args.config, "r") as f:
         config = json.loads(f.read())
 
-    tokenizer = AutoTokenizer(config["MODEL_NAME"])
+    tokenizer = AutoTokenizer.from_pretrained(config["MODEL_NAME"])
     tokenizer.pad_token = tokenizer.unk_token
 
-    model = AutoModelForCausalLM(
+    model = AutoModelForCausalLM.from_pretrained(
         config["MODEL_NAME"],
         device_map = config["TRAIN_PARAMS"]["DEVICE_MAP"],
         load_in_8bit = config["TRAIN_PARAMS"]["LOAD_IN_8BIT"],
