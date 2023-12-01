@@ -78,10 +78,10 @@ def main():
     data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
     train_dataset = get_dataset(
-        config["TRAIN_DATASET"], config["TRAIN_PARAMS"]["MAX_LEN"]
+        config["TRAIN_DATASET"], tokenizer, config["TRAIN_PARAMS"]["MAX_LEN"]
     )
     test_dataset = get_dataset(
-        config["TEST_DATASET"], config["TRAIN_PARAMS"]["MAX_LEN"]
+        config["TEST_DATASET"], tokenizer, config["TRAIN_PARAMS"]["MAX_LEN"]
     )
 
     trainer = Trainer(
