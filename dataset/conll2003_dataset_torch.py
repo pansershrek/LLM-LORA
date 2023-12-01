@@ -16,6 +16,7 @@ class Conll2003Dataset(Dataset):
             'B-ORG': 3, 'I-ORG': 4, 'B-LOC': 5,
             'I-LOC': 6, 'B-MISC': 7, 'I-MISC': 8
         }
+        self.tagset_rev = dict(zip(self.tagset.values(), self.tagset.keys()))
         self.begin_entity_symbol = "@@"
         self.end_entity_symbol = "##"
         self.samples, self.max_len_sample_text = (
@@ -25,13 +26,24 @@ class Conll2003Dataset(Dataset):
         self.max_length = max_length
 
     def fix_sample_text(self, text):
-        output = text.replace(" .", ".").replace(" ,", ",")
-        output = output.replace(" !", "!").replace(" ?", "?")
-        output = output.replace(" :", ":").replace(" -", "-")
-        output = output.replace(" '", "'").replace(' "', '"')
-        output = output.replace("@@ ", "@@").replace(' ##', '##')
-        output = output.replace(" =", "=").replace(" /", "/")
+        output = text.replace("@@ ", "@@").replace(' ##', '##')
+        #output = text.replace(" .", ".").replace(" ,", ",")
+        #output = output.replace(" !", "!").replace(" ?", "?")
+        #output = output.replace(" :", ":").replace(" -", "-")
+        #output = output.replace(" '", "'").replace(' "', '"')
+        #output = output.replace("@@ ", "@@").replace(' ##', '##')
+        #output = output.replace(" =", "=").replace(" /", "/")
+        #output = output.replace("- ", "-")
         return output
+
+    def convert_ner_tags(self, tags):
+        ans = []
+        for x in tags:
+            tag = self.tagset_rev[x]
+            if "-" in tag:
+                tag = tag[2:]
+            ans.append(tag)
+        return ans
 
     def convert_sample(self, ner_tags, tokens, cur_ner_tag):
         begin_indexes = []
@@ -95,7 +107,12 @@ class Conll2003Dataset(Dataset):
                         ),
                         "sample_text_input": self.fix_sample_text(
                             " ".join(x["tokens"])
-                        )
+                        ),
+                        #"original_ner_tags": x["ner_tags"],
+                        #"original_tokens": x["tokens"],
+                        "converted_ner_tags": (
+                            self.convert_ner_tags(x["ner_tags"])
+                        ),
                     }
                     tmp["instruction"] = (
                         self.instruction.format(entity=tmp["entity"])
@@ -150,3 +167,26 @@ class Conll2003Dataset(Dataset):
         #     ),
         #     "attention_mask": [1] * len(input_ids),
         # }
+
+ds = Conll2003Dataset("train", None)
+tmp = []
+
+for x in ds:
+    tmp.append(x)
+
+with open("conll2003_dataset_train.json", "w") as f:
+    print(json.dumps(tmp, indent=4), file=f)
+
+print(ds.max_len_sample_text)
+
+ds = Conll2003Dataset("test", None)
+tmp = []
+
+for x in ds:
+    tmp.append(x)
+
+with open("conll2003_dataset_test.json", "w") as f:
+    print(json.dumps(tmp, indent=4), file=f)
+
+print(ds.max_len_sample_text)
+

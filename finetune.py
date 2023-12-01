@@ -26,7 +26,7 @@ def get_dataset(data_path, tokenizer, max_length):
             max_length=max_length,
             padding="max_length"
         )["input_ids"]
-        input_ids_not_mask = self.tokenizer(
+        input_ids_not_mask = tokenizer(
             tmp["output"],
             truncation=True
         )["input_ids"]
@@ -41,7 +41,7 @@ def get_dataset(data_path, tokenizer, max_length):
             "attention_mask": [1] * len(input_ids),
         }
     dataset = load_dataset("json", data_files=data_path)["train"]
-    return datasets.map(tokenize)
+    return dataset.map(tokenize)
 
 def main():
     parser = argparse.ArgumentParser()

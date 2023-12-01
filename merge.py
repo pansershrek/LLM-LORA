@@ -1,23 +1,36 @@
 import argparse
 import json
 
-import torch
-from peft import PeftModel, prepare_model_for_kbit_training
-import transformers
-import pandas as pd
+from peft import PeftModel
 
-from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer, BloomForCausalLM, GenerationConfig
-from transformers.models.opt.modeling_opt import OPTDecoderLayer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model = AutoModelForCausalLM.from_pretrained(
-    "mistralai/Mistral-7B-Instruct-v0.1",
-    #load_in_8bit=True,
-    #torch_dtype=torch.float16,
-    device_map='cpu'
-)
-tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
-#model = prepare_model_for_kbit_training(model)
-model = PeftModel.from_pretrained(model, "/home/admin/LLM-LORA/mistral_finetune_4")
-model = model.merge_and_unload()
-model.save_pretrained("/data/LLM-LORA/new_weights")
-tokenizer.save_pretrained("/data/LLM-LORA/new_weights")
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config", default="/data/LLM-LORA/config/mistral_conll2003.json"
+    )
+    args = parser.parse_args()
+
+    with open(args.config, "r") as f:
+        config = json.loads(f.read())
+
+    tokenizer = AutoTokenizer.from_pretrained(config["MODEL_NAME"])
+    tokenizer.pad_token = tokenizer.unk_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        config["MODEL_NAME"],
+        device_map = "cpu"
+    )
+    model.config.pad_token_id = tokenizer.pad_token_id
+    model.config.max_length = config["TRAIN_PARAMS"]["MAX_LEN"]
+    model = PeftModel.from_pretrained(model, config["MODEL_OUTPUT"])
+    model = model.merge_and_unload()
+
+    model.save_pretrained(config["MERGED_MODEL_PATH"])
+    tokenizer.save_pretrained(config["MERGED_MODEL_PATH"])
+
+
+if __name__ == "__main__":
+    main()
