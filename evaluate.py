@@ -51,11 +51,15 @@ def main():
 
     test_dataset = get_dataset(config["TEST_DATASET"])
     batched_test_dataset = create_batched_dataset(
-        test_dataset, 4
+        test_dataset, config["SAMPLING_PARAMS"]["BATCH_SIZE"]
     )
-    
+
     generated_text = []
-    for x in batched_test_dataset:
+    for idx, x in enumerate(batched_test_dataset):
+        print(
+            f"Step {idx * config["SAMPLING_PARAMS"]["BATCH_SIZE"]}",
+            flush=True
+        )
         outputs = model.generate(x["input"], sampling_params)
         texts = [x.outputs[0].text for x in outputs]
         generated_text += texts
