@@ -55,7 +55,7 @@ def main():
 
     for x in batched_test_dataset:
         outputs = model.generate(x["input"], sampling_params)
-        print(outputs.outputs)
+        print(outputs)
         break
 
 if __name__ == "__main__":
