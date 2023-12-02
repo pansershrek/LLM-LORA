@@ -40,7 +40,7 @@ def get_dataset(data_path, tokenizer, max_length):
             ),
             "attention_mask": [1] * len(input_ids),
         }
-    dataset = load_dataset("json", data_files=data_path)["train"][:10]
+    dataset = load_dataset("json", data_files=data_path)["train"]
     return dataset.map(tokenize)
 
 def main():
