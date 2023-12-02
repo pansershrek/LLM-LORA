@@ -1,4 +1,5 @@
 import argparse
+import os
 import json
 
 from datasets import load_dataset
@@ -52,11 +53,23 @@ def main():
     batched_test_dataset = create_batched_dataset(
         test_dataset, 4
     )
-
+    
+    generated_text = []
     for x in batched_test_dataset:
         outputs = model.generate(x["input"], sampling_params)
-        print(outputs)
-        break
+        texts = [x.outputs[0].text for x in outputs]
+        generated_text += texts
+
+    ans = []
+    for x, y in zip(test_dataset, generated_text):
+        x["generated_text"] = y
+        ans.append(x)
+
+    with open(
+        os.path.join(config["MODEL_OUTPUT"], "generated_output.json"), "w"
+    ) as f:
+        print(json.dumps(ans, indent=4), file=f)
+
 
 if __name__ == "__main__":
     main()
