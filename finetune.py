@@ -46,7 +46,7 @@ def get_dataset(data_path, tokenizer, max_length):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--config", default="/data/LLM-LORA/config/mistral_conll2003.json"
+        "--config", default="/data/LLM-LORA/config/openhermes_conll2003.json"
     )
     args = parser.parse_args()
 
