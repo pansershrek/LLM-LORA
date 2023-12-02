@@ -57,7 +57,7 @@ def main():
     generated_text = []
     for idx, x in enumerate(batched_test_dataset):
         print(
-            f"Step {idx * config["SAMPLING_PARAMS"]["BATCH_SIZE"]}",
+            f"Step {idx * config['SAMPLING_PARAMS']['BATCH_SIZE']}",
             flush=True
         )
         outputs = model.generate(x["input"], sampling_params)
