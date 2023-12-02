@@ -43,8 +43,8 @@ def main():
         config = json.loads(f.read())
 
     model = LLM(
-        config["MERGED_MODEL_PATH"],
-        tensor_parallel_size = torch.cuda.device_count()
+        config["MERGED_MODEL_PATH"]
+        #tensor_parallel_size = torch.cuda.device_count()
     )
     sampling_params = SamplingParams(
         temperature = config["SAMPLING_PARAMS"]["TEMPERATURE"],
