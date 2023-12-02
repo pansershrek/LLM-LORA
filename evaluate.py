@@ -2,6 +2,7 @@ import argparse
 import os
 import json
 
+import torch
 from datasets import load_dataset
 from vllm import LLM, SamplingParams
 
@@ -41,7 +42,10 @@ def main():
     with open(args.config, "r") as f:
         config = json.loads(f.read())
 
-    model = LLM(config["MERGED_MODEL_PATH"])
+    model = LLM(
+        config["MERGED_MODEL_PATH"],
+        tensor_parallel_size = torch.cuda.device_count()
+    )
     sampling_params = SamplingParams(
         temperature = config["SAMPLING_PARAMS"]["TEMPERATURE"],
         top_k = config["SAMPLING_PARAMS"]["TOP_K"],
