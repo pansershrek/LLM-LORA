@@ -8,4 +8,4 @@ git+https://github.com/huggingface/peft.git
 gradio
 appdirs
 scikit-learn
-ray
+ray==2.6.0
