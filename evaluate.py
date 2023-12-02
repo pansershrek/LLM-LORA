@@ -2,7 +2,7 @@ import argparse
 import json
 
 from datasets import load_dataset
-#from vllm import LLM, SamplingParams
+from vllm import LLM, SamplingParams
 
 def get_dataset(data_path):
     return load_dataset("json", data_files=data_path)["train"]
