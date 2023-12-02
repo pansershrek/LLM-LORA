@@ -40,7 +40,7 @@ def main():
     with open(args.config, "r") as f:
         config = json.loads(f.read())
 
-    model = vllm(config["MERGED_MODEL_PATH"])
+    model = LLM(config["MERGED_MODEL_PATH"])
     sampling_params = SamplingParams(
         temperature = config["SAMPLING_PARAMS"]["TEMPERATURE"],
         top_k = config["SAMPLING_PARAMS"]["TOP_K"],
