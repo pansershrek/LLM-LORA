@@ -1,7 +1,7 @@
 {
     "MODEL_NAME": "GeneZC/MiniChat-1.5-3B",
     "MODEL_OUTPUT": "/data/LLM-LORA/result/minichat_finetune_1",
-    "MERGED_MODEL_PATH": "/data/LLM-LORA/weights_merged",
+    "MERGED_MODEL_PATH": "/data/LLM-LORA/minichat_weights_merged",
     "TRAIN_DATASET": "/data/LLM-LORA/dataset/conll2003_dataset_train.json",
     "TEST_DATASET": "/data/LLM-LORA/dataset/conll2003_dataset_test.json",
     "DATASET": "conll2003",
