@@ -87,7 +87,7 @@ def main():
     trainer = Trainer(
         model = model,
         train_dataset = train_dataset,
-        eval_dataset = test_dataset,
+        #eval_dataset = test_dataset,
         args = TrainingArguments(
             report_to = config["TRAIN_PARAMS"]["REPORT_TO"],
             per_device_train_batch_size = (
