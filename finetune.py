@@ -22,13 +22,14 @@ def get_dataset(data_path, tokenizer, max_length):
     def tokenize(tmp):
         input_ids = tokenizer(
             tmp["full_input"],
-            truncation=True,
-            max_length=max_length,
-            padding="max_length"
+            truncation = True,
+            max_length = max_length,
+            padding = "max_length"
         )["input_ids"]
         input_ids_not_mask = tokenizer(
             tmp["output"],
-            truncation=True
+            truncation = True,
+            max_length = max_length
         )["input_ids"]
         mask_len = (
             len(input_ids) - len(input_ids_not_mask)
