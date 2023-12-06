@@ -102,7 +102,7 @@ def main():
             learning_rate = config["TRAIN_PARAMS"]["LEARNING_RATE"],
             fp16 = config["TRAIN_PARAMS"]["FP16"],
             logging_steps = 1,
-            evaluation_strategy="epoch",
+            evaluation_strategy="no",
             output_dir = config["MODEL_OUTPUT"],
         ),
         data_collator=data_collator,
