@@ -115,14 +115,14 @@ def main():
         lambda self, *_, **__: get_peft_model_state_dict(self, old_state_dict())
     ).__get__(model, type(model))
 
-    if torch.__version__ >= "2":
-        model = torch.compile(model)
+    #if torch.__version__ >= "2":
+    #    model = torch.compile(model)
 
     with wandb.init(project="Instruction NER") as run:
         model.print_trainable_parameters()
         trainer.train()
 
-    model.save_pretrained(config["MODEL_OUTPUT"])
+    model.save_pretrained(config["MODEL_OUTPUT"], safe_serialization=False)
 
 
 
