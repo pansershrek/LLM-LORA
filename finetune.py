@@ -104,6 +104,7 @@ def main():
             logging_steps = 1,
             evaluation_strategy="no",
             output_dir = config["MODEL_OUTPUT"],
+            save_safetensors = False
         ),
         data_collator=data_collator,
     )
