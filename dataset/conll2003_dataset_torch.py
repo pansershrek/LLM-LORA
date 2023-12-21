@@ -11,6 +11,12 @@ class Conll2003Dataset(Dataset):
             "The task is to label {entity} entities in the given sentence."
         )
         self.entity_types = ['PER', 'ORG', 'LOC', 'MISC']
+        self.entity_types_full = {
+            'PER': 'PER (persons)',
+            'ORG': 'ORG (organizations)',
+            'LOC': 'LOC (locations)',
+            'MISC': 'MISC (miscellaneous names)'
+        }
         self.tagset = {
             'O': 0, 'B-PER': 1, 'I-PER': 2,
             'B-ORG': 3, 'I-ORG': 4, 'B-LOC': 5,
@@ -115,10 +121,12 @@ class Conll2003Dataset(Dataset):
                         ),
                     }
                     tmp["instruction"] = (
-                        self.instruction.format(entity=tmp["entity"])
+                        self.instruction.format(
+                            entity=self.entity_types_full[tmp["entity"]]
+                        )
                     )
                     tmp["input"] = (
-                        f"{self.instruction}\n"
+                        f'{tmp["instruction"]}\n'
                         f"Input: {tmp['sample_text_input']}\n"
                         f"Output:"
                     )
