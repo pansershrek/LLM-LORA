@@ -71,7 +71,7 @@ def main():
     fix_model(model, tokenizer, use_resize=False)
     model = prepare_model_for_kbit_training(model)
     #model.config.pad_token_id = tokenizer.pad_token_id
-    #model.config.max_length = config["TRAIN_PARAMS"]["MAX_LEN"]
+    model.config.max_length = config["TRAIN_PARAMS"]["MAX_LEN"]
     lora_config = LoraConfig(
         r = config["LORA_PARAMS"]["LORA_R"],
         lora_alpha = config["LORA_PARAMS"]["LORA_ALPHA"],
