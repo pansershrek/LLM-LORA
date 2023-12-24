@@ -7,15 +7,16 @@ from transformers import AutoTokenizer
 class Conll2003Dataset(Dataset):
     def __init__(self, split, tokenizer, max_length=1102):
         self.instruction = (
-            "I am an excellent linguist. "
-            "The task is to label {entity} entities in the given sentence."
+            "You are an excellent linguist. You are solving the NER problem. "
+            "The task is to label only {entity} entities in the given sentence. "
+            "You should only output the answer, the other output is wrong."
         )
         self.entity_types = ['PER', 'ORG', 'LOC', 'MISC']
         self.entity_types_full = {
-            'PER': 'PER (persons)',
-            'ORG': 'ORG (organizations)',
-            'LOC': 'LOC (locations)',
-            'MISC': 'MISC (miscellaneous names)'
+            'PER': 'persons (PER)',
+            'ORG': 'organizations (ORG)',
+            'LOC': 'locations (LOC)',
+            'MISC': 'miscellaneous names (MISC)'
         }
         self.tagset = {
             'O': 0, 'B-PER': 1, 'I-PER': 2,
@@ -32,7 +33,8 @@ class Conll2003Dataset(Dataset):
         self.max_length = max_length
 
     def fix_sample_text(self, text):
-        output = text.replace("@@ ", "@@").replace(' ##', '##')
+        output = text.replace(f"{self.begin_entity_symbol} ", f"{self.begin_entity_symbol}")
+        output = output.replace(f" {self.end_entity_symbol}", f"{self.end_entity_symbol}")
         #output = text.replace(" .", ".").replace(" ,", ",")
         #output = output.replace(" !", "!").replace(" ?", "?")
         #output = output.replace(" :", ":").replace(" -", "-")

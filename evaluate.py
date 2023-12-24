@@ -41,11 +41,13 @@ def main():
 
     with open(args.config, "r") as f:
         config = json.loads(f.read())
-
-    model = LLM(
-        config["MERGED_MODEL_PATH"]
-        #tensor_parallel_size = torch.cuda.device_count()
-    )
+    if "ONLY_EVAL" in config and config["ONLY_EVAL"]:
+        model = LLM(config["MODEL_NAME"])
+    else:
+        model = LLM(
+            config["MERGED_MODEL_PATH"]
+            #tensor_parallel_size = torch.cuda.device_count()
+        )
     sampling_params = SamplingParams(
         temperature = config["SAMPLING_PARAMS"]["TEMPERATURE"],
         top_k = config["SAMPLING_PARAMS"]["TOP_K"],
