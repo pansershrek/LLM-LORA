@@ -18,6 +18,8 @@ from transformers import (
     TrainingArguments
 )
 
+from utils import set_random_seed, fix_tokenizer, fix_model
+
 def get_dataset(data_path, tokenizer, max_length):
     def tokenize(tmp):
         input_ids = tokenizer(
@@ -54,8 +56,11 @@ def main():
     with open(args.config, "r") as f:
         config = json.loads(f.read())
 
+    set_random_seed(config["SEED"])
+
     tokenizer = AutoTokenizer.from_pretrained(config["MODEL_NAME"])
-    tokenizer.pad_token = tokenizer.unk_token
+    #tokenizer.pad_token = tokenizer.unk_token
+    tokenizer = fix_tokenizer(tokenizer)
 
     model = AutoModelForCausalLM.from_pretrained(
         config["MODEL_NAME"],
@@ -63,8 +68,9 @@ def main():
         load_in_8bit = config["TRAIN_PARAMS"]["LOAD_IN_8BIT"],
         use_flash_attention_2 = config["TRAIN_PARAMS"]["USE_FLASH_ATTENTION_2"]
     )
+    fix_model(model, tokenizer, use_resize=False)
     model = prepare_model_for_kbit_training(model)
-    model.config.pad_token_id = tokenizer.pad_token_id
+    #model.config.pad_token_id = tokenizer.pad_token_id
     model.config.max_length = config["TRAIN_PARAMS"]["MAX_LEN"]
     lora_config = LoraConfig(
         r = config["LORA_PARAMS"]["LORA_R"],
