@@ -9,7 +9,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--config", default="/data/LLM-LORA/config/mistral_conll2003.json"
+        "--config", default="/data/LLM-LORA/config/llama_2_conll2003.json"
     )
     args = parser.parse_args()
 
