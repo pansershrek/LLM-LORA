@@ -9,3 +9,4 @@ gradio
 appdirs
 scikit-learn
 ray==2.6.0
+autoawq
