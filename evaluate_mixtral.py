@@ -20,17 +20,24 @@ def main():
     pipeline = transformers.pipeline(
         "text-generation",
         model=model,
-        model_kwargs={"torch_dtype": torch.float16, "load_in_4bit": True},
+        device_map="auto"
     )
-
-    for x in test_dataset:
+    ans = []
+    for idx, x in enumerate(test_dataset):
         messages = [{"role": "user", "content": x["input"]}]
         prompt = pipeline.tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
         )
-        outputs = pipeline(prompt, max_new_tokens=256, do_sample=True, temperature=0.7, top_k=50, top_p=0.95)
-        print(outputs[0]["generated_text"])
-        break
+        outputs = pipeline(
+            prompt, max_new_tokens=800, temperature=0.75, top_p=0.9
+        )
+        if idx % 1000 == 0:
+            print(outputs[0]["generated_text"], flush=True)
+        x["generated_output"] = outputs[0]["generated_text"]
+        ans.append(x)
+
+    with open("/mnt/data/g.skiba/LLM-LORA/mixtral_generation_result.json", "w") as f:
+        print(json.dumps(ans), file=f)
 
 
 if __name__ == "__main__":
