@@ -24,9 +24,12 @@ def main():
     )
 
     for x in test_dataset:
-        print(x)
+        prompt = pipeline.tokenizer.apply_chat_template(
+            x["input"], tokenize=False, add_generation_prompt=True
+        )
+        outputs = pipeline(prompt, max_new_tokens=256, do_sample=True, temperature=0.7, top_k=50, top_p=0.95)
+        print(outputs[0]["generated_text"])
         break
-        prompt = pipeline.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
 
 if __name__ == "__main__":
