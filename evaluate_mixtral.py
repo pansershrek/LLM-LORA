@@ -1,0 +1,33 @@
+import argparse
+import os
+import json
+
+import torch
+from datasets import load_dataset
+from transformers import AutoTokenizer
+import transformers
+
+def get_dataset(data_path):
+    return load_dataset("json", data_files=data_path)["train"]
+
+def main():
+    test_dataset = get_dataset(
+        "/mnt/data/g.skiba/LLM-LORA/dataset/conll2003_dataset_test.json"
+    )
+
+    model = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+    tokenizer = AutoTokenizer.from_pretrained(model)
+    pipeline = transformers.pipeline(
+        "text-generation",
+        model=model,
+        model_kwargs={"torch_dtype": torch.float16, "load_in_4bit": True},
+    )
+
+    for x in test_dataset:
+        print(x)
+        break
+        prompt = pipeline.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+
+
+if __name__ == "__main__":
+    main()
