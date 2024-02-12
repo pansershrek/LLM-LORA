@@ -20,6 +20,16 @@ from transformers import (
 
 from utils import set_random_seed, fix_tokenizer, fix_model
 
+def prepare_llama_pro(model):
+    for x, y in model.named_parameters():
+        if "model.layers" in x:
+            num = int(x.split(".")[2])
+            if (num + 1) % 4 != 0:
+                y.requires_grad = False
+            else:
+                y.requires_grad = True
+    return model
+
 def get_dataset(data_path, tokenizer, max_length):
     def tokenize(tmp):
         input_ids = tokenizer(
@@ -49,7 +59,7 @@ def get_dataset(data_path, tokenizer, max_length):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--config", default="/data/LLM-LORA/config/llama_2_conll2003.json"
+        "--config", default="/mnt/g.skiba/LLM-LORA/config/llama_pro.json"
     )
     args = parser.parse_args()
 
@@ -62,25 +72,35 @@ def main():
     #tokenizer.pad_token = tokenizer.unk_token
     tokenizer = fix_tokenizer(tokenizer)
 
-    model = AutoModelForCausalLM.from_pretrained(
-        config["MODEL_NAME"],
-        device_map = config["TRAIN_PARAMS"]["DEVICE_MAP"],
-        load_in_8bit = config["TRAIN_PARAMS"]["LOAD_IN_8BIT"],
-        use_flash_attention_2 = config["TRAIN_PARAMS"]["USE_FLASH_ATTENTION_2"]
-    )
-    fix_model(model, tokenizer, use_resize=False)
-    model = prepare_model_for_kbit_training(model)
-    #model.config.pad_token_id = tokenizer.pad_token_id
-    #model.config.max_length = config["TRAIN_PARAMS"]["MAX_LEN"]
-    lora_config = LoraConfig(
-        r = config["LORA_PARAMS"]["LORA_R"],
-        lora_alpha = config["LORA_PARAMS"]["LORA_ALPHA"],
-        target_modules = config["LORA_PARAMS"]["TARGET_MODULES"],
-        lora_dropout = config["LORA_PARAMS"]["LORA_DROPOUT"],
-        bias = "none",
-        task_type = "CAUSAL_LM",
-    )
-    model = get_peft_model(model, lora_config)
+    if not config["LLAMA_PRO"]:
+        model = AutoModelForCausalLM.from_pretrained(
+            config["MODEL_NAME"],
+            device_map = config["TRAIN_PARAMS"]["DEVICE_MAP"],
+            load_in_8bit = config["TRAIN_PARAMS"]["LOAD_IN_8BIT"],
+            use_flash_attention_2 = config["TRAIN_PARAMS"]["USE_FLASH_ATTENTION_2"]
+        )
+        fix_model(model, tokenizer, use_resize=False)
+        model = prepare_model_for_kbit_training(model)
+        #model.config.pad_token_id = tokenizer.pad_token_id
+        #model.config.max_length = config["TRAIN_PARAMS"]["MAX_LEN"]
+        lora_config = LoraConfig(
+            r = config["LORA_PARAMS"]["LORA_R"],
+            lora_alpha = config["LORA_PARAMS"]["LORA_ALPHA"],
+            target_modules = config["LORA_PARAMS"]["TARGET_MODULES"],
+            lora_dropout = config["LORA_PARAMS"]["LORA_DROPOUT"],
+            bias = "none",
+            task_type = "CAUSAL_LM",
+        )
+        model = get_peft_model(model, lora_config)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            config["MODEL_NAME"],
+            device_map = config["TRAIN_PARAMS"]["DEVICE_MAP"],
+            load_in_8bit = config["TRAIN_PARAMS"]["LOAD_IN_8BIT"],
+            use_flash_attention_2 = config["TRAIN_PARAMS"]["USE_FLASH_ATTENTION_2"]
+        )
+        model = prepare_llama_pro(model)
+
 
     data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
@@ -114,18 +134,18 @@ def main():
         ),
         data_collator=data_collator,
     )
+    if not config["LLAMA_PRO"]:
+        model.config.use_cache = False
 
-    model.config.use_cache = False
-
-    old_state_dict = model.state_dict
-    model.state_dict = (
-        lambda self, *_, **__: get_peft_model_state_dict(self, old_state_dict())
-    ).__get__(model, type(model))
+        old_state_dict = model.state_dict
+        model.state_dict = (
+            lambda self, *_, **__: get_peft_model_state_dict(self, old_state_dict())
+        ).__get__(model, type(model))
 
     #if torch.__version__ >= "2":
     #    model = torch.compile(model)
 
-    with wandb.init(project="Instruction NER") as run:
+    with wandb.init(project="Instruction NER PRO") as run:
         model.print_trainable_parameters()
         trainer.train()
 
