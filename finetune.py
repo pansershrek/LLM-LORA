@@ -97,7 +97,8 @@ def main():
             config["MODEL_NAME"],
             device_map = config["TRAIN_PARAMS"]["DEVICE_MAP"],
             load_in_8bit = config["TRAIN_PARAMS"]["LOAD_IN_8BIT"],
-            use_flash_attention_2 = config["TRAIN_PARAMS"]["USE_FLASH_ATTENTION_2"]
+            use_flash_attention_2 = config["TRAIN_PARAMS"]["USE_FLASH_ATTENTION_2"],
+            torch_dtype=torch.bfloat16
         )
         model = prepare_llama_pro(model)
 
@@ -126,7 +127,7 @@ def main():
             warmup_steps = config["TRAIN_PARAMS"]["WARMUP_STEPS"],
             num_train_epochs = config["TRAIN_PARAMS"]["EPOCHS"],
             learning_rate = config["TRAIN_PARAMS"]["LEARNING_RATE"],
-            fp16 = config["TRAIN_PARAMS"]["FP16"],
+            bf16 = config["TRAIN_PARAMS"]["FP16"],
             logging_steps = 1,
             evaluation_strategy="no",
             output_dir = config["MODEL_OUTPUT"],
