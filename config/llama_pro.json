@@ -1,5 +1,5 @@
 {
-    "MODEL_NAME": "/mnt/g.skiba/LLM-LORA/SuperLlamaPro-2-8.3B-bf-16-colossal.bin",
+    "MODEL_NAME": "TencentARC/LLaMA-Pro-8B",
     "MODEL_OUTPUT": "/mnt/g.skiba/LLM-LORA/result/llama2_pro",
     "MERGED_MODEL_PATH": "/mnt/g.skiba/LLM-LORA/llama_pro_weights_merged",
     "TRAIN_DATASET": "/mnt/g.skiba/LLM-LORA/dataset/conll2003_dataset_train.json",

@@ -4,12 +4,12 @@ import json
 from datasets import load_dataset
 import torch
 import wandb
-from peft import (
-    LoraConfig,
-    get_peft_model,
-    get_peft_model_state_dict,
-    prepare_model_for_kbit_training
-)
+# from peft import (
+#     LoraConfig,
+#     get_peft_model,
+#     get_peft_model_state_dict,
+#     prepare_model_for_kbit_training
+# )
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -68,7 +68,7 @@ def main():
 
     set_random_seed(config["SEED"])
 
-    tokenizer = AutoTokenizer.from_pretrained(config["MODEL_NAME"])
+    tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
     #tokenizer.pad_token = tokenizer.unk_token
     tokenizer = fix_tokenizer(tokenizer)
 
@@ -100,6 +100,10 @@ def main():
             use_flash_attention_2 = config["TRAIN_PARAMS"]["USE_FLASH_ATTENTION_2"],
             torch_dtype=torch.bfloat16
         )
+        model.load_state_dict(
+            torch.load("pytorch_model.bin")
+        )
+
         model = prepare_llama_pro(model)
 
 
